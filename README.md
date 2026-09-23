@@ -49,6 +49,10 @@ standard library.
 |---|---|
 | ![Study](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_study.png) | ![Settlement with depth](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_depth_dark_tr.png) |
 
+| Embankment on soft clay | Settlement across the embankment |
+|---|---|
+| ![Embankment](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_embankment.png) | ![Settlement across the embankment](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_embankment_profile.png) |
+
 ## Install & run
 
 From a clone, with nothing installed but the scientific stack:

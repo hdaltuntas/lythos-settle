@@ -25,25 +25,26 @@ DRAINAGE = ["double", "single"]
 
 # --- Interface theme (web/static/style.css) and plot palette ---------------
 # --- kept together so the figures always match the page they are shown on. -
-ACCENT = "#2F80ED"
+ACCENT = "#C6613F"
 
 THEMES = {
-    "dark": dict(bg="#1E1F24", panel="#2A2C33", input_bg="#33363F", fg="#E6E6E6",
-                 fg_dim="#9AA0AA", border="#3D414B", hover="#3A3E48", btn="#353943",
-                 muted="#555A66", accent=ACCENT, accent_hover="#4A90F0"),
-    "light": dict(bg="#F3F4F6", panel="#FFFFFF", input_bg="#FFFFFF", fg="#1F2933",
-                  fg_dim="#6B7280", border="#D9DDE3", hover="#EEF1F5", btn="#F7F8FA",
-                  muted="#B8C0CC", accent=ACCENT, accent_hover="#1F6FDB"),
+    "dark": dict(bg="#262624", panel="#30302E", input_bg="#262624", fg="#F5F4ED",
+                 fg_dim="#A6A39A", border="#4A4944", hover="#3A3A37", btn="#3A3A37",
+                 muted="#6B6A64", accent="#D97757", accent_hover="#E08B6E"),
+    "light": dict(bg="#F5F4ED", panel="#FAF9F5", input_bg="#FFFFFF", fg="#141413",
+                  fg_dim="#73726C", border="#E3E0D5", hover="#F0EEE6", btn="#F0EEE6",
+                  muted="#B7B4AA", accent=ACCENT, accent_hover="#B0532F"),
 }
 
-# Semantic colours: the same quantity is the same colour in every figure.
+# Semantic colours: the same quantity is the same colour in every figure. Warm and
+# muted, to sit on the paper-coloured page; terracotta marks the total.
 PLOT_PALETTE = dict(
-    immediate="#2F80ED", consolidation="#9B5DE5", secondary="#F2994A",
-    total="#EB5757", stress="#0EA5A4", overburden="#6B7280", preconsolidation="#27AE60",
-    limit="#B9770E", water="#56CCF2", footing="#7F8C8D",
-    center="#2F80ED", char="#9B5DE5", edge="#F2994A", corner="#0EA5A4",
-    shoulder="#9B5DE5", midslope="#F2994A", toe="#0EA5A4", fill="#C9A876",
-    allowable="#EB5757",
+    immediate="#5B8DB8", consolidation="#8C6BB1", secondary="#D9A55B",
+    total="#C6613F", stress="#4E9A8A", overburden="#73726C", preconsolidation="#5E8C4A",
+    limit="#A26A12", water="#6FA8C7", footing="#8A8680",
+    center="#C6613F", char="#8C6BB1", edge="#D9A55B", corner="#4E9A8A",
+    shoulder="#8C6BB1", midslope="#D9A55B", toe="#4E9A8A", fill="#C9A876",
+    allowable="#B0413E",
 )
 
 # Fill colours of the two soil behaviours in the schematic (theme-dependent,

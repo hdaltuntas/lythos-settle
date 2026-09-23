@@ -9,6 +9,9 @@ from typing import Dict
 
 from .config import THEMES
 
+#: Serif for figure titles, like the page's headings (Matplotlib ships it)
+TITLE_FONT = "DejaVu Serif"
+
 
 def resolve_theme(theme) -> Dict[str, str]:
     """Accepts a theme name ('light' / 'dark') or an already-resolved dict."""

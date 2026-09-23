@@ -14,7 +14,8 @@ from ..i18n import TRANSLATIONS
 #: Text the web shell needs and the rest of the program does not.
 #: key -> (English, Turkish)
 SHELL = {
-    "tagline": ("settlement analysis of shallow foundations", "sığ temellerin oturma analizi"),
+    "tagline": ("settlement of shallow foundations and embankments",
+                "sığ temellerin ve dolguların oturma analizi"),
     "language": ("Language", "Dil"),
     "open": ("Open…", "Aç…"),
     "save": ("Save", "Kaydet"),

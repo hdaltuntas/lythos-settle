@@ -16,7 +16,7 @@ import numpy as np
 from matplotlib.figure import Figure
 
 from .config import PLOT_PALETTE
-from .plot_style import style_axis, style_figure
+from .plot_style import TITLE_FONT, style_axis, style_figure
 from .study import OUTPUTS, Study, _column
 
 #: The colour of each output in the study figures
@@ -60,7 +60,7 @@ def _empty(fig: Figure, text: str, th) -> None:
 
 
 def _title(fig, th, text):
-    fig.suptitle(text, color=th["fg"], fontsize=12, fontweight="bold", x=0.02, ha="left")
+    fig.suptitle(text, color=th["fg"], fontsize=13.5, fontfamily=TITLE_FONT, x=0.02, ha="left")
 
 
 def plot_oat(fig: Figure, study: Study, L: Dict[str, str], output: str = "s_total",

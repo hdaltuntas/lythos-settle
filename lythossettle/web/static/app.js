@@ -672,7 +672,9 @@ async function start() {
   const meta = await api("/api/meta");
   S.values = JSON.parse(JSON.stringify(meta.defaults));
   applyMeta(meta);
-  if (theme === "dark") await applyTheme("dark");
+  // Always tell the server: it keeps the theme of whichever page spoke last,
+  // and the figures would otherwise follow that page rather than this one.
+  await applyTheme(theme === "dark" ? "dark" : "light");
   await refreshVariables();
 
   $("language").addEventListener("change", (e) => setLanguage(e.target.value));

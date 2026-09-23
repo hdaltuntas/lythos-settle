@@ -30,14 +30,14 @@ STATIC = os.path.join(os.path.dirname(__file__), "static")
 #: A mark for the browser tab: a footing on layered ground, and its settlement
 _FAVICON = (
     b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
-    b'<rect width="32" height="32" rx="6" fill="#1E1F24"/>'
-    b'<path d="M3 17h26v5H3z" fill="#C9A876"/>'
-    b'<path d="M3 22h26v7H3z" fill="#7E9A78"/>'
-    b'<path d="M9 12h14v5H9z" fill="#9AA0AA"/>'
-    b'<path d="M16 3v7" stroke="#EB5757" stroke-width="2.4" stroke-linecap="round"/>'
-    b'<path d="M12.5 7.5 16 11l3.5-3.5" fill="none" stroke="#EB5757" stroke-width="2.2" '
+    b'<rect width="32" height="32" rx="7" fill="#F5F4ED"/>'
+    b'<path d="M3 17h26v5H3z" fill="#E3C98F"/>'
+    b'<path d="M3 22h26v7H3z" fill="#A7B8A0"/>'
+    b'<path d="M9 12h14v5H9z" fill="#8A8680"/>'
+    b'<path d="M16 3v7" stroke="#C6613F" stroke-width="2.4" stroke-linecap="round"/>'
+    b'<path d="M12.5 7.5 16 11l3.5-3.5" fill="none" stroke="#C6613F" stroke-width="2.2" '
     b'stroke-linecap="round" stroke-linejoin="round"/>'
-    b'<path d="M6 19.5q10 5 20 0" fill="none" stroke="#2F80ED" stroke-width="1.6"/></svg>'
+    b'<path d="M6 19.5q10 5 20 0" fill="none" stroke="#141413" stroke-width="1.4"/></svg>'
 )
 
 #: File names of the report and export downloads

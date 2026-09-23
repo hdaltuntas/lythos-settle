@@ -26,7 +26,7 @@ from matplotlib.patches import Polygon, Rectangle
 from . import stress
 from .config import PLOT_PALETTE, SOIL_FILL
 from .i18n import TRANSLATIONS
-from .plot_style import label_box, style_axis, style_figure
+from .plot_style import TITLE_FONT, label_box, style_axis, style_figure
 
 #: The figures, in the order the interface offers them
 PLOT_KEYS = ["schematic", "stress", "influence", "settlement_depth", "time", "points", "profile"]
@@ -54,7 +54,7 @@ class Plotter:
     # ------------------------------------------------------------------ helpers
     def _title(self, fig, th, key):
         info = self.a.config.get("project_info", {}).get("title", "")
-        fig.suptitle(self.L[f"fig_{key}"], color=th["fg"], fontsize=12, fontweight="bold",
+        fig.suptitle(self.L[f"fig_{key}"], color=th["fg"], fontsize=13.5, fontfamily=TITLE_FONT,
                      x=0.02, ha="left")
         if info:
             fig.text(0.98, 0.965, info, color=th["fg_dim"], fontsize=8.5, ha="right",

@@ -7,39 +7,47 @@
  */
 
 :root {
-  --bg: #F3F4F6;
-  --panel: #FFFFFF;
-  --panel-2: #EEF1F5;
+  /* warm paper, terracotta accent, a serif for what is read and a sans for the chrome */
+  --bg: #F5F4ED;
+  --panel: #FAF9F5;
+  --panel-2: #F0EEE6;
   --input: #FFFFFF;
-  --ink: #1F2933;
-  --muted: #6B7280;
-  --line: #D9DDE3;
-  --accent: #2F80ED;
-  --accent-soft: #E3ECF7;
+  --ink: #141413;
+  --muted: #73726C;
+  --line: #E3E0D5;
+  --accent: #C6613F;
+  --accent-soft: #F5E6DE;
   --accent-ink: #FFFFFF;
-  --ok: #27AE60;
-  --ok-soft: #E9F7EF;
-  --bad: #EB5757;
-  --bad-soft: #FDECEA;
-  --warn: #B9770E;
-  --warn-soft: #FEF5E7;
-  --shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --ok: #3F7F4F;
+  --ok-soft: #E6F0E6;
+  --bad: #B0413E;
+  --bad-soft: #F7E3E0;
+  --warn: #A26A12;
+  --warn-soft: #F8EEDB;
+  --serif: "Tiempos Text", "Source Serif 4", "Source Serif Pro", "Iowan Old Style",
+           "Palatino Linotype", Palatino, Georgia, "DejaVu Serif", serif;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial,
+          "DejaVu Sans", sans-serif;
+  --shadow: 0 1px 2px rgba(20, 20, 19, 0.05);
 }
 
 :root[data-theme="dark"] {
-  --bg: #1E1F24;
-  --panel: #2A2C33;
-  --panel-2: #33363F;
-  --input: #33363F;
-  --ink: #E6E6E6;
-  --muted: #9AA0AA;
-  --line: #3D414B;
-  --accent: #4A90F0;
-  --accent-soft: #33455A;
-  --accent-ink: #12161C;
-  --ok-soft: #26402F;
-  --bad-soft: #4A2B28;
-  --warn-soft: #43371F;
+  --bg: #262624;
+  --panel: #30302E;
+  --panel-2: #3A3A37;
+  --input: #262624;
+  --ink: #F5F4ED;
+  --muted: #A6A39A;
+  --line: #4A4944;
+  --accent: #D97757;
+  --accent-soft: #4A342B;
+  --accent-ink: #1F1E1D;
+  --ok: #7FB38A;
+  --ok-soft: #2F3D31;
+  --bad: #E0736A;
+  --bad-soft: #4A2E2B;
+  --warn: #D9A55B;
+  --warn-soft: #463A26;
   --shadow: none;
 }
 
@@ -51,7 +59,7 @@
 
 body {
   margin: 0;
-  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 13.5px/1.5 var(--sans);
   color: var(--ink);
   background: var(--bg);
   height: 100vh;
@@ -259,3 +267,37 @@ table.grid input:disabled, table.grid select:disabled { opacity: 0.3; cursor: no
 table.grid td.off { background: var(--panel-2); }
 .table-note { margin-top: 2px; }
 .view img + img { margin-top: 14px; }
+
+/* ------------------------------------------------------- claude-style look */
+header h1 { font-family: var(--serif); font-size: 19px; font-weight: 500; letter-spacing: 0; }
+header h1 span { font-family: var(--sans); font-size: 12.5px; }
+header { padding: 10px 18px; }
+
+button { border-radius: 8px; padding: 6px 12px; }
+button.primary { font-weight: 500; }
+select, input[type="text"], input[type="number"] { border-radius: 7px; padding: 5px 8px; }
+input:focus, select:focus { box-shadow: 0 0 0 3px var(--accent-soft); }
+
+fieldset { border-radius: 12px; background: var(--panel); }
+legend { font-family: var(--serif); font-size: 14px; font-weight: 500; color: var(--ink); }
+h2 { font-family: var(--serif); text-transform: none; letter-spacing: 0; font-size: 15px;
+     font-weight: 500; color: var(--ink); }
+
+nav.modules button { font-weight: 500; }
+.tabs button { border-radius: 9px 9px 0 0; font-weight: 500; }
+.tabs button.active { font-weight: 600; }
+
+/* quiet table heads: the accent is for actions, not for furniture */
+table.grid th { background: var(--panel-2); color: var(--ink); font-weight: 600;
+                border-bottom: 1px solid var(--line); }
+table.grid tr.selected td { background: var(--accent-soft); }
+
+.cards .card { border-radius: 12px; border: 1px solid var(--line); border-left-width: 4px;
+               box-shadow: var(--shadow); padding: 11px 14px; }
+.cards .card b { font-family: var(--serif); font-size: 22px; font-weight: 500; }
+.warnings { border-radius: 10px; }
+.warnings h3 { font-family: var(--serif); font-size: 13.5px; font-weight: 500; }
+.view pre { border-radius: 12px; }
+.view img { border-radius: 10px; }
+.view .placeholder { font-family: var(--serif); font-size: 16px; }
+table.data { border-radius: 10px; overflow: hidden; }

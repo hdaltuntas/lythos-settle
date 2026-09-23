@@ -46,6 +46,10 @@ dışında hiçbir bağımlılık getirmez.
 |---|---|
 | ![Çalışma](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_study.png) | ![Derinlikle oturma](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_depth_dark_tr.png) |
 
+| Yumuşak kil üzerinde dolgu | Dolgu boyunca oturma |
+|---|---|
+| ![Dolgu](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_embankment.png) | ![Dolgu boyunca oturma](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_embankment_profile.png) |
+
 ## Kurulum ve çalıştırma
 
 Klondan, yalnız bilimsel paketler kurulu olarak:
