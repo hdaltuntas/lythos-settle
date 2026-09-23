@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lythossettle"
+version = "0.1.0"
+description = "Settlement analysis of shallow foundations: Boussinesq / 2:1 stress distribution, immediate settlement (Steinbrenner, Schmertmann), primary consolidation and secondary compression, Terzaghi time–settlement, and parametric / reliability studies with PDF reporting."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Hasan Deniz Altuntaş", email = "lythosfea@gmail.com" }]
+keywords = [
+    "geotechnical", "settlement", "foundation", "shallow foundation", "raft", "footing",
+    "consolidation", "terzaghi", "boussinesq", "steinbrenner", "schmertmann",
+    "secondary compression", "angular distortion", "reliability", "monte carlo",
+    "civil engineering",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Natural Language :: English",
+    "Natural Language :: Turkish",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+# The program's output is drawings and reports - stress bulbs, settlement and
+# time curves, PDFs - so the plotting and reporting libraries are required, not
+# optional. The interface itself needs nothing beyond the standard library.
+dependencies = [
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "reportlab>=4.0",
+]
+
+[project.optional-dependencies]
+# Word reports, and the spreadsheet export of a study; both formats are offered
+# by the interface, and each needs its package.
+docx = ["python-docx>=0.8"]
+xlsx = ["openpyxl>=3.0"]
+dev = [
+    "pytest>=7.0", "ruff>=0.4", "build>=1.0", "twine>=5.0",
+    "python-docx>=0.8", "openpyxl>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hdaltuntas/lyrhos-settle"
+Repository = "https://github.com/hdaltuntas/lyrhos-settle"
+Issues = "https://github.com/hdaltuntas/lyrhos-settle/issues"
+Releasing = "https://github.com/hdaltuntas/lyrhos-settle/blob/main/docs/releasing.md"
+
+[project.scripts]
+lythos-settle = "lythossettle.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lythossettle*"]
+
+[tool.setuptools.package-data]
+"lythossettle.web" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+
+# The rule set is named rather than left to the default, which changes with the
+# linter's version: what passes here should keep passing after an upgrade.
+# It is the rules that catch mistakes — undefined names, unused imports, import
+# order, stray whitespace.
+[tool.ruff.lint]
+select = ["E4", "E9", "F", "I", "W"]
