@@ -49,6 +49,14 @@ TEXTS = {
         "clay_params": "Consolidation parameters of the cohesive layers",
         "stress_method": "Stress distribution", "imm_method": "Immediate settlement",
         "rigidity": "Foundation rigidity", "sublayer": "Sublayer thickness",
+        "emb_crest": "Crest width", "emb_height": "Height H", "emb_left": "Left slope angle",
+        "emb_right": "Right slope angle", "emb_base": "Width at the base",
+        "emb_gamma": "Unit weight of the fill γ", "emb_q": "Fill load q = γ·H (under the crest)",
+        "note_emb": "Embankment: a long trapezoidal fill on the ground surface (plane strain). Δσ "
+                    "is exact for the piecewise-linear strip load (Flamant's line load integrated "
+                    "over each segment); the elastic settlement superposes uniform strips, the "
+                    "crest as one and each slope as 16 slices. The fill's own compression, "
+                    "undrained lateral spreading and stability are not included.",
         "depth_ratio": "Influence depth criterion Δσ / σ'v0", "life": "Design life",
         "creep": "Schmertmann creep factor C2", "s_allow": "Allowable total settlement",
         "d_allow": "Allowable angular distortion",
@@ -123,6 +131,14 @@ TEXTS = {
         "clay_params": "Kohezyonlu tabakaların konsolidasyon parametreleri",
         "stress_method": "Gerilme dağılımı", "imm_method": "Ani oturma",
         "rigidity": "Temel rijitliği", "sublayer": "Alt tabaka kalınlığı",
+        "emb_crest": "Tepe genişliği", "emb_height": "Yükseklik H", "emb_left": "Sol şev açısı",
+        "emb_right": "Sağ şev açısı", "emb_base": "Taban genişliği",
+        "emb_gamma": "Dolgunun birim hacim ağırlığı γ", "emb_q": "Dolgu yükü q = γ·H (tepe altında)",
+        "note_emb": "Dolgu: zemin yüzeyinde uzun, yamuk kesitli dolgu (düzlem şekil değiştirme). "
+                    "Δσ parçalı doğrusal şerit yük için kesindir (Flamant çizgisel yükü her parça "
+                    "üzerinde integre edilir); elastik oturma düzgün şeritlerin süperpozisyonudur, "
+                    "tepe tek şerit, her şev 16 dilim. Dolgunun kendi sıkışması, drenajsız yanal "
+                    "yayılma ve stabilite hesaba katılmaz.",
         "depth_ratio": "Etki derinliği ölçütü Δσ / σ'v0", "life": "Tasarım ömrü",
         "creep": "Schmertmann sünme katsayısı C2", "s_allow": "İzin verilen toplam oturma",
         "d_allow": "İzin verilen açısal distorsiyon",
@@ -333,15 +349,25 @@ def build_html(analysis, lang: str, figures: Dict[str, bytes], img_src=None,
     parts.append(f"<h2>{T['sec_inputs']}</h2>")
     parts.append(f"<h3>{T['sec_found']}</h3>")
     rows = [[T["shape"], L["shape_" + a.shape], ""]]
-    if a.shape == "circle":
-        rows.append([T["D"], _f(a.B), "m"])
+    if a.embankment:
+        e = a.embankment
+        rows += [[T["emb_crest"], _f(e["crest"]), "m"], [T["emb_height"], _f(e["height"]), "m"],
+                 [T["emb_left"], f"{_f(e['slope_left'])} (1:{_f(e['run_left'] / e['height'])})",
+                  "°"],
+                 [T["emb_right"],
+                  f"{_f(e['slope_right'])} (1:{_f(e['run_right'] / e['height'])})", "°"],
+                 [T["emb_base"], _f(a.B), "m"], [T["emb_gamma"], _f(e["gamma"], 1), "kN/m³"],
+                 [T["emb_q"], _f(a.q, 1), "kPa"]]
     else:
-        rows.append([T["B"], _f(a.B), "m"])
-        if a.shape == "rectangle":
-            rows.append([T["L"], _f(a.L), "m"])
-    rows += [[T["Df"], _f(a.Df), "m"], [T["q"], _f(a.q, 1), "kPa"],
-             [T["net"], yn(a.net_pressure), ""],
-             [T["zw"], _f(a.profile.zw), "m"], [T["gw"], _f(a.profile.gw), "kN/m³"]]
+        if a.shape == "circle":
+            rows.append([T["D"], _f(a.B), "m"])
+        else:
+            rows.append([T["B"], _f(a.B), "m"])
+            if a.shape == "rectangle":
+                rows.append([T["L"], _f(a.L), "m"])
+        rows += [[T["Df"], _f(a.Df), "m"], [T["q"], _f(a.q, 1), "kPa"],
+                 [T["net"], yn(a.net_pressure), ""]]
+    rows += [[T["zw"], _f(a.profile.zw), "m"], [T["gw"], _f(a.profile.gw), "kN/m³"]]
     parts.append(_kv_table(T, rows))
 
     parts.append(f"<h3>{T['sec_soil']}</h3>")
@@ -377,12 +403,12 @@ def build_html(analysis, lang: str, figures: Dict[str, bytes], img_src=None,
 
     # ---------------- 2. stresses
     parts.append(f"<h2 style='page-break-before:always'>{T['sec_stress']}</h2>")
-    parts.append(_kv_table(T, [
-        [T["q"], _f(a.q, 1), "kPa"],
-        [T["sigma_base"], _f(res["sigma_base"], 1), "kPa"],
-        [T["q_net"], _f(res["q_net"], 1), "kPa"],
-        [T["z_limit"], _f(res["z_limit"]), "m"],
-    ]))
+    if a.embankment:
+        rows = [[T["emb_q"], _f(a.q, 1), "kPa"]]
+    else:
+        rows = [[T["q"], _f(a.q, 1), "kPa"], [T["sigma_base"], _f(res["sigma_base"], 1), "kPa"],
+                [T["q_net"], _f(res["q_net"], 1), "kPa"]]
+    parts.append(_kv_table(T, rows + [[T["z_limit"], _f(res["z_limit"]), "m"]]))
     parts.append(f"<h3>{T['sec_stress_layers']}</h3>")
     gov = res["governing"]
     rows = []
@@ -451,7 +477,9 @@ def build_html(analysis, lang: str, figures: Dict[str, bytes], img_src=None,
              _status(T, check_d["status"])]]
     parts.append(_table([T["check"], T["actual"], T["allowable"], T["status"]], rows,
                         [40, 20, 20, 20]))
-    if a.rigidity == "rigid":
+    if a.embankment:
+        parts.append(f"<p class='note'>{_esc(L['res_emb_dist'])}</p>")
+    elif a.rigidity == "rigid":
         parts.append(f"<p class='note'>{_esc(L['res_rigid'])}</p>")
 
     # ---------------- 4. figures
@@ -466,7 +494,8 @@ def build_html(analysis, lang: str, figures: Dict[str, bytes], img_src=None,
         parts.extend(f"<li>{_esc(warning_text(lang, w))}</li>" for w in res["warnings"])
         parts.append("</ul>")
     parts.append(f"<h2>{T['sec_notes']}</h2><ul class='note'>")
-    parts.extend(f"<li>{_esc(n)}</li>" for n in T["notes"])
+    notes = T["notes"] + ([T["note_emb"]] if a.embankment else [])
+    parts.extend(f"<li>{_esc(n)}</li>" for n in notes)
     parts.append("</ul>")
     if study is not None and study.rows:
         parts.extend(_study_section(T, L, study, figures, img_src))

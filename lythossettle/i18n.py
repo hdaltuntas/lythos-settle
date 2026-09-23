@@ -33,6 +33,11 @@ ENTRIES = {
     "err_life": ("The design life must be greater than zero.",
                  "Tasarım ömrü sıfırdan büyük olmalıdır."),
 
+    "err_embankment": ("The embankment needs a height and a unit weight greater than zero, a crest "
+                       "width of zero or more, and slope angles between 0 and 90°.",
+                       "Dolgunun yüksekliği ve birim hacim ağırlığı sıfırdan büyük, tepe genişliği "
+                       "sıfır veya daha büyük, şev açıları 0 ile 90° arasında olmalıdır."),
+
     # ------------------------------------------------------------------ warnings
     "warn_swapped": ("The length was shorter than the width; B and L were swapped so that B ≤ L.",
                      "Boy genişlikten kısaydı; B ≤ L olacak şekilde B ve L yer değiştirdi."),
@@ -61,10 +66,16 @@ ENTRIES = {
                               "Schmertmann etki bölgesi zemin profilinin altına uzanıyor; "
                               "altta kalan kısım hesaba katılmadı."),
 
+    "warn_emb_schmertmann": ("Schmertmann's method is for footings; the embankment's immediate "
+                             "settlement is computed elastically (Steinbrenner).",
+                             "Schmertmann yöntemi tekil temeller içindir; dolgunun ani oturması "
+                             "elastik olarak (Steinbrenner) hesaplandı."),
+
     # ------------------------------------------------------------------ choice labels
     "shape_rectangle": ("Rectangle", "Dikdörtgen"),
     "shape_strip": ("Strip", "Şerit"),
     "shape_circle": ("Circle", "Daire"),
+    "shape_embankment": ("Embankment (fill)", "Dolgu (şevli)"),
     "stress_boussinesq": ("Boussinesq (elastic)", "Boussinesq (elastik)"),
     "stress_two_to_one": ("2:1 spread", "2:1 yayılma"),
     "immediate_elastic": ("Elastic (Steinbrenner)", "Elastik (Steinbrenner)"),
@@ -79,6 +90,9 @@ ENTRIES = {
     "point_char": ("Characteristic point", "Karakteristik nokta"),
     "point_edge": ("Middle of long edge", "Uzun kenar ortası"),
     "point_corner": ("Corner", "Köşe"),
+    "point_shoulder": ("Crest edge", "Tepe kenarı"),
+    "point_midslope": ("Middle of the slope", "Şev ortası"),
+    "point_toe": ("Toe of the slope", "Şev topuğu"),
     "method_elastic": ("Elastic (Steinbrenner)", "Elastik (Steinbrenner)"),
     "method_schmertmann": ("Schmertmann", "Schmertmann"),
     "method_cohesive": ("Undrained elastic + consolidation", "Drenajsız elastik + konsolidasyon"),
@@ -95,6 +109,17 @@ ENTRIES = {
     "q_label": ("Bearing pressure q (gross)", "Taban basıncı q (brüt)"),
     "net_label": ("Deduct the excavated overburden (net pressure)",
                   "Kazılan örtü yükünü düş (net basınç)"),
+    "group_embankment": ("Embankment", "Dolgu"),
+    "emb_crest_label": ("Crest width", "Tepe genişliği"),
+    "emb_height_label": ("Height H", "Yükseklik H"),
+    "emb_slope_left_label": ("Left slope angle", "Sol şev açısı"),
+    "emb_slope_right_label": ("Right slope angle", "Sağ şev açısı"),
+    "emb_gamma_label": ("Unit weight of the fill γ", "Dolgunun birim hacim ağırlığı γ"),
+    "emb_note": ("A long fill on the ground surface (plane strain): γ·H under the crest, falling to "
+                 "zero at the toes. Slope angles from the horizontal: 1V:2H = 26.57°, "
+                 "1V:1.5H = 33.69°.",
+                 "Zemin yüzeyindeki uzun bir dolgu (düzlem şekil değiştirme): tepe altında γ·H, "
+                 "topuklarda sıfıra iner. Şev açıları yataydan: 1D:2Y = 26.57°, 1D:1.5Y = 33.69°."),
     "group_water": ("Groundwater", "Yeraltı suyu"),
     "water_depth_label": ("Water table depth", "Su tablası derinliği"),
     "gamma_w_label": ("Unit weight of water γw", "Suyun birim hacim ağırlığı γw"),
@@ -156,6 +181,15 @@ ENTRIES = {
     "res_title": ("SETTLEMENT ANALYSIS RESULTS", "OTURMA ANALİZİ SONUÇLARI"),
     "res_foundation": ("Foundation: {shape}, B = {B:.2f} m{L}, Df = {Df:.2f} m, {rigidity}",
                        "Temel: {shape}, B = {B:.2f} m{L}, Df = {Df:.2f} m, {rigidity}"),
+    "res_embankment": ("Embankment: crest {c:.2f} m, height {h:.2f} m, slopes {sl:.1f}° / {sr:.1f}°, "
+                       "γ = {g:.1f} kN/m³, base width {w:.2f} m",
+                       "Dolgu: tepe {c:.2f} m, yükseklik {h:.2f} m, şevler {sl:.1f}° / {sr:.1f}°, "
+                       "γ = {g:.1f} kN/m³, taban genişliği {w:.2f} m"),
+    "res_emb_load": ("Fill load q = γ·H = {q:.1f} kPa under the crest",
+                     "Dolgu yükü q = γ·H = {q:.1f} kPa (tepe altında)"),
+    "res_emb_dist": ("Embankment: the angular distortion is not checked.",
+                     "Dolgu: açısal distorsiyon kontrol edilmez."),
+    "card_dist_emb": ("not checked for a fill", "dolguda kontrol edilmez"),
     "res_pressure": ("Gross pressure q = {q:.1f} kPa; overburden at the base σv0 = {s:.1f} kPa; "
                      "net pressure q_net = {qn:.1f} kPa",
                      "Brüt basınç q = {q:.1f} kPa; taban seviyesinde örtü yükü σv0 = {s:.1f} kPa; "
@@ -207,6 +241,8 @@ ENTRIES = {
     "fig_settlement_depth": ("Settlement with depth", "Derinlikle oturma"),
     "fig_time": ("Time–settlement", "Zaman–oturma"),
     "fig_points": ("Settlement at the points", "Noktalarda oturma"),
+    "fig_profile": ("Settlement across the section", "Kesit boyunca oturma"),
+    "lg_emb_load": ("q = γH = {q:.0f} kPa", "q = γH = {q:.0f} kPa"),
     "ax_depth": ("Depth below ground (m)", "Zeminden derinlik (m)"),
     "ax_stress": ("Vertical stress (kPa)", "Düşey gerilme (kPa)"),
     "ax_influence": ("Δσ / q_net,  Iz", "Δσ / q_net,  Iz"),
@@ -311,6 +347,11 @@ ENTRIES = {
     "var_OCR": ("OCR", "OCR"),
     "var_cv": ("cv", "cv"),
     "var_Calpha": ("Cα", "Cα"),
+    "var_crest": ("crest width", "tepe genişliği"),
+    "var_height": ("H", "H"),
+    "var_slope_left": ("left slope", "sol şev"),
+    "var_slope_right": ("right slope", "sağ şev"),
+    "grp_embankment": ("Embankment", "Dolgu"),
     "grp_foundation": ("Foundation", "Temel"),
     "grp_water": ("Groundwater", "Yeraltı suyu"),
 }

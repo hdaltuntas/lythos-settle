@@ -14,5 +14,9 @@ command line, parametric / reliability studies).
 - Terzaghi time–settlement curve, t50 and t90 per clay layer.
 - Settlement at the centre, characteristic point, edge and corner; rigid foundations;
   angular distortion; checks against allowable settlement and distortion.
+- Embankments: crest width, height, left / right slope angles and fill unit weight; exact
+  stress under the trapezoidal load, plane-strain elastic settlement, settlement at the crest
+  centre, crest edge, mid-slope and toe.
+- Settlement profile across the section, for footings and embankments.
 - Studies: one-at-a-time, Latin hypercube, Monte Carlo; statistics, probability of
   exceedance with 95 % CI and β, Spearman sensitivities, CSV / XLSX export.

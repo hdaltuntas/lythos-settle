@@ -39,6 +39,23 @@ are explicit for a circle, so the integral is one-dimensional and exact up to th
 **2:1** — q·B·L/((B+z)(L+z)), q·B/(B+z), q·D²/(D+z)²: an average over the widened area,
 the same at every point, so under 2:1 the consolidation settlement does not vary in plan.
 
+**Embankment** — a long fill on the ground surface: crest width b, height H, slope angles
+β_L, β_R, unit weight γ. The load is p(x) = γH under the crest, falling linearly to zero over
+the slope runs H/tan β. For a segment where p = A + Bξ, Flamant's line load
+2p z³/(π((ξ−x)² + z²)²) integrates, with u = ξ − x, to
+
+    Δσ = (A + Bx)·[atan(u/z) + uz/(u² + z²)]/π − B·z³/(π(u² + z²))
+
+between the ends of the segment; the embankment is the sum of its three segments, so the
+stress is exact at any point (plane strain). Under 2:1 the fill is replaced by the uniform
+strip of the same load, of width b + (run_L + run_R)/2. The evaluation points are the crest
+centre, the crest edge, the middle of the (right) slope and its toe. The elastic
+settlement superposes plane-strain Steinbrenner strips — the crest as one, each slope as 16
+slices carrying the load at their middle (converged to 0.2 %). A fill is flexible;
+Schmertmann's footing diagram is not applied to it, and its angular distortion is not
+checked. The fill's own compression, undrained lateral spreading and stability are outside
+the program.
+
 ## 4. Influence depth
 
 The profile below the base is cut into sublayers (0.25 m by default). Settlement is summed

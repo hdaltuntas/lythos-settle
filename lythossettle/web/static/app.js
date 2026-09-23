@@ -140,22 +140,28 @@ function fieldNode(field) {
 
 function onSelect(key, value) {
   S.values[key] = value;
-  // Only a rectangle has a length.
-  if (key === "shape") renderFoundationForm();
+  // Which fields apply depends on the shape: only a rectangle has a length,
+  // only an embankment has slopes.
+  if (key === "shape") {
+    renderFoundationForm();
+    renderForm($("optionsForm"), S.meta.schema.options.groups);
+  }
 }
+
+/* A field or a group the schema limits to some shapes */
+const applies = (item) => !item.shapes || item.shapes.includes(S.values.shape);
 
 function groupNode(group) {
   const box = el("fieldset", {}, el("legend", { text: group.title }));
   for (const field of group.fields) {
-    if (field.key === "L" && S.values.shape !== "rectangle") continue;
-    box.append(fieldNode(field));
+    if (applies(field)) box.append(fieldNode(field));
   }
   if (group.note) box.append(el("div", { class: "note", text: group.note }));
   return box;
 }
 
 function renderForm(host, groups) {
-  host.replaceChildren(...groups.map(groupNode));
+  host.replaceChildren(...groups.filter(applies).map(groupNode));
 }
 
 function renderFoundationForm() {

@@ -16,7 +16,7 @@ __all__ = ["APP_NAME", "APP_VERSION", "DEFAULT_CONFIG", "THEMES", "PLOT_PALETTE"
 MM_PER_M = 1000.0
 
 # --- Choice lists (the first entry is the default where one is needed) -----
-SHAPES = ["rectangle", "strip", "circle"]
+SHAPES = ["rectangle", "strip", "circle", "embankment"]
 STRESS_METHODS = ["boussinesq", "two_to_one"]
 IMMEDIATE_METHODS = ["elastic", "schmertmann"]
 RIGIDITY = ["flexible", "rigid"]
@@ -42,6 +42,7 @@ PLOT_PALETTE = dict(
     total="#EB5757", stress="#0EA5A4", overburden="#6B7280", preconsolidation="#27AE60",
     limit="#B9770E", water="#56CCF2", footing="#7F8C8D",
     center="#2F80ED", char="#9B5DE5", edge="#F2994A", corner="#0EA5A4",
+    shoulder="#9B5DE5", midslope="#F2994A", toe="#0EA5A4", fill="#C9A876",
     allowable="#EB5757",
 )
 
@@ -64,6 +65,15 @@ DEFAULT_CONFIG = {
         "Df": 1.5,                 # depth of the foundation base [m]
         "q": 100.0,                # applied (gross) bearing pressure [kPa]
         "net_pressure": True,      # deduct the overburden removed by the excavation
+    },
+    # An embankment (shape "embankment"): a long trapezoidal fill on the ground
+    # surface, loading it with γ·H under the crest and less under the slopes.
+    "embankment": {
+        "crest": 12.0,             # crest width [m]
+        "height": 4.0,             # [m]
+        "slope_left": 26.57,       # slope angles from the horizontal [°] (1V:2H)
+        "slope_right": 26.57,
+        "gamma": 20.0,             # unit weight of the fill [kN/m³]
     },
     "groundwater": {
         "depth": 2.0,              # below ground surface [m]

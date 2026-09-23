@@ -4,13 +4,16 @@
 
 [![Tests](https://github.com/hdaltuntas/lythos-settle/actions/workflows/tests.yml/badge.svg)](https://github.com/hdaltuntas/lythos-settle/actions/workflows/tests.yml)
 
-Settlement analysis of shallow foundations, driven from your browser. A rectangular, strip
-or circular foundation on a layered soil profile is analysed for **how much** it settles
+Settlement analysis of shallow foundations and embankments, driven from your browser. A
+rectangular, strip or circular foundation — or an embankment given by its crest width,
+height and slope angles — on a layered soil profile is analysed for **how much** it settles
 and **how fast**:
 
 1. **Stresses** — in-situ σv0, u0, σ'v0 and σ'p; the stress increase beneath the foundation
    by Boussinesq (Newmark's rectangle, the strip and the circle solutions) or by the 2:1
-   spread, at the centre, the characteristic point, the middle of the long edge and the corner.
+   spread, at the centre, the characteristic point, the middle of the long edge and the corner;
+   under an embankment, exactly for its trapezoidal load, at the crest centre, the crest edge,
+   the middle of the slope and the toe.
 2. **Immediate settlement** — layered elastic (Steinbrenner) in every layer, or
    Schmertmann (1978) in the granular layers.
 3. **Consolidation** — primary settlement of the clay layers from Cc, Cr, e0 and σ'p, and
@@ -86,6 +89,9 @@ the browser can be re-run unattended.
 * **Foundation:** shape (rectangle, strip, circle), B (diameter of a circle), L, depth Df,
   gross bearing pressure q; optionally the excavated overburden is deducted
   (q_net = q − σv0(Df)).
+* **Embankment** (shape "embankment"): crest width, height H, left and right slope angles
+  from the horizontal, unit weight of the fill γ; the load is γ·H under the crest, falling
+  linearly to zero at the toes.
 * **Groundwater:** depth of the water table, γw.
 * **Soil profile**, from the surface down, one row per layer: thickness, granular or
   cohesive, γ, γsat, E, ν, and for the clays Cc, Cr, e0, OCR, cv, Cα and single / double
@@ -101,7 +107,9 @@ the browser can be re-run unattended.
 |---|---|
 | Δσ under a rectangle | Newmark's integration of Boussinesq, superposed for any point |
 | Δσ under a strip / circle | closed form / exact one-dimensional integral over the polar angle |
+| Δσ under an embankment | exact: Flamant's line load integrated over the piecewise-linear (trapezoidal) load |
 | Δσ, approximate | 2:1 spread |
+| embankment, immediate | Steinbrenner in plane strain, the crest as one strip and each slope as 16 slices |
 | immediate settlement | Steinbrenner F1, F2 on each layer (layered elastic), or Schmertmann (1978) with C1, C2 and the L/B-interpolated influence diagram |
 | primary consolidation | Cr up to σ'p = OCR·σ'v0, Cc beyond it, sublayer by sublayer at each point |
 | secondary compression | Cα/(1+e0)·H·log(t/t_p) from U = 95 % to the design life; Cα·Cr/Cc where the clay stays over-consolidated |
@@ -116,7 +124,7 @@ The derivations and their limits are in [docs/theory.md](https://github.com/hdal
 Section with the Boussinesq stress bulb · stresses with depth (σ'v0, σ'v0 + Δσ, σ'p and the
 influence-depth criterion) · influence factors at each point with Schmertmann's Iz ·
 cumulative settlement with depth · time–settlement curve · settlement components at each
-point. Study figures: one-at-a-time sweep, histogram, scatter, tornado.
+point · settlement across the section (the settlement trough under a footing or a fill). Study figures: one-at-a-time sweep, histogram, scatter, tornado.
 
 ## Reports
 

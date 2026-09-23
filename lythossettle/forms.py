@@ -59,6 +59,7 @@ class Field:
     step: Optional[float] = None
     decimals: int = 2
     options: List[Dict[str, str]] = field(default_factory=list)
+    shapes: List[str] = field(default_factory=list)       # shown only for these shapes
 
     def to_dict(self) -> dict:
         """Only what the browser needs; empty values are left out."""
@@ -73,11 +74,14 @@ class Group:
     title: str
     fields: List[Field]
     note: str = ""
+    shapes: List[str] = field(default_factory=list)       # shown only for these shapes
 
     def to_dict(self) -> dict:
         d = {"title": self.title, "fields": [f.to_dict() for f in self.fields]}
         if self.note:
             d["note"] = self.note
+        if self.shapes:
+            d["shapes"] = list(self.shapes)
         return d
 
 
@@ -98,6 +102,16 @@ def _text(key, label, default=""):
     return Field(key, label, "text", default)
 
 
+def _only(shapes: List[str], item):
+    """Shows a field or a group only for some foundation shapes."""
+    item.shapes = list(shapes)
+    return item
+
+
+#: The shapes that are foundations, as against an embankment
+FOOTINGS = [s for s in SHAPES if s != "embankment"]
+
+
 def _choices(lang: str, prefix: str, values: List[str]):
     return [(value, _t(lang, f"{prefix}_{value}")) for value in values]
 
@@ -116,16 +130,26 @@ def project_groups(lang: str = "en") -> List[Group]:
 
 def foundation_groups(lang: str = "en") -> List[Group]:
     f = DEFAULT_CONFIG["foundation"]
+    e = DEFAULT_CONFIG["embankment"]
     w = DEFAULT_CONFIG["groundwater"]
     return [
         Group(_t(lang, "group_foundation"), [
             _select("shape", _t(lang, "shape_label"), f["shape"], _choices(lang, "shape", SHAPES)),
-            _num("B", _t(lang, "B_label"), f["B"], 0.1, 500, "m", 2, 0.1),
-            _num("L", _t(lang, "L_label"), f["L"], 0.1, 500, "m", 2, 0.1),
-            _num("Df", _t(lang, "Df_label"), f["Df"], 0, 50, "m", 2, 0.1),
-            _num("q", _t(lang, "q_label"), f["q"], 0, 5000, "kPa", 1, 5),
-            _check("net_pressure", _t(lang, "net_label"), f["net_pressure"]),
+            _only(FOOTINGS, _num("B", _t(lang, "B_label"), f["B"], 0.1, 500, "m", 2, 0.1)),
+            _only(["rectangle"], _num("L", _t(lang, "L_label"), f["L"], 0.1, 500, "m", 2, 0.1)),
+            _only(FOOTINGS, _num("Df", _t(lang, "Df_label"), f["Df"], 0, 50, "m", 2, 0.1)),
+            _only(FOOTINGS, _num("q", _t(lang, "q_label"), f["q"], 0, 5000, "kPa", 1, 5)),
+            _only(FOOTINGS, _check("net_pressure", _t(lang, "net_label"), f["net_pressure"])),
         ]),
+        _only(["embankment"], Group(_t(lang, "group_embankment"), [
+            _num("emb_crest", _t(lang, "emb_crest_label"), e["crest"], 0, 500, "m", 2, 0.5),
+            _num("emb_height", _t(lang, "emb_height_label"), e["height"], 0.1, 100, "m", 2, 0.1),
+            _num("emb_slope_left", _t(lang, "emb_slope_left_label"), e["slope_left"], 1, 90,
+                 "°", 2, 0.5),
+            _num("emb_slope_right", _t(lang, "emb_slope_right_label"), e["slope_right"], 1, 90,
+                 "°", 2, 0.5),
+            _num("emb_gamma", _t(lang, "emb_gamma_label"), e["gamma"], 1, 30, "kN/m³", 1, 0.5),
+        ], note=_t(lang, "emb_note"))),
         Group(_t(lang, "group_water"), [
             _num("water_depth", _t(lang, "water_depth_label"), w["depth"], 0, 500, "m", 2, 0.1),
             _num("gamma_water", _t(lang, "gamma_w_label"), w["gamma_water"], 9, 11, "kN/m³",
@@ -143,8 +167,8 @@ def option_groups(lang: str = "en") -> List[Group]:
                     _choices(lang, "stress", STRESS_METHODS)),
             _select("immediate_method", _t(lang, "immediate_method_label"),
                     o["immediate_method"], _choices(lang, "immediate", IMMEDIATE_METHODS)),
-            _select("rigidity", _t(lang, "rigidity_label"), o["rigidity"],
-                    _choices(lang, "rigidity", RIGIDITY)),
+            _only(FOOTINGS, _select("rigidity", _t(lang, "rigidity_label"), o["rigidity"],
+                                    _choices(lang, "rigidity", RIGIDITY))),
             _num("sublayer", _t(lang, "sublayer_label"), o["sublayer"], 0.05, 5, "m", 2, 0.05),
             _num("depth_ratio", _t(lang, "depth_ratio_label"), o["depth_ratio"], 0, 1, "", 2,
                  0.05),
@@ -306,6 +330,8 @@ def to_config(values: dict) -> Dict[str, Any]:
         "q": _f(values, "q", d["foundation"]["q"]),
         "net_pressure": _b(values, "net_pressure", d["foundation"]["net_pressure"]),
     }
+    e = d["embankment"]
+    cfg["embankment"] = {key: _f(values, f"emb_{key}", e[key]) for key in e}
     cfg["groundwater"] = {"depth": _f(values, "water_depth", d["groundwater"]["depth"]),
                           "gamma_water": _f(values, "gamma_water",
                                             d["groundwater"]["gamma_water"])}
@@ -330,6 +356,7 @@ def to_config(values: dict) -> Dict[str, Any]:
 #: Flat key <- (section, key) of the configuration
 _MAP = [("title", "project_info", "title"), ("analyst", "project_info", "analyst")] + \
     [(k, "foundation", k) for k in ("shape", "B", "L", "Df", "q", "net_pressure")] + \
+    [(f"emb_{k}", "embankment", k) for k in DEFAULT_CONFIG["embankment"]] + \
     [("water_depth", "groundwater", "depth"), ("gamma_water", "groundwater", "gamma_water")] + \
     [(k, "options", k) for k in ("stress_method", "immediate_method", "rigidity", "sublayer",
                                  "depth_ratio", "design_life", "creep")] + \

@@ -4,13 +4,14 @@
 
 [![Tests](https://github.com/hdaltuntas/lythos-settle/actions/workflows/tests.yml/badge.svg)](https://github.com/hdaltuntas/lythos-settle/actions/workflows/tests.yml)
 
-Tarayıcıdan sürülen, sığ temellerin oturma analizi. Tabakalı bir zemin profili üzerindeki
-dikdörtgen, şerit ya da dairesel bir temelin **ne kadar** ve **ne hızla** oturacağı
-hesaplanır:
+Tarayıcıdan sürülen, sığ temellerin ve dolguların oturma analizi. Tabakalı bir zemin profili
+üzerindeki dikdörtgen, şerit ya da dairesel bir temelin — ya da tepe genişliği, yüksekliği ve
+şev açılarıyla verilen bir dolgunun — **ne kadar** ve **ne hızla** oturacağı hesaplanır:
 
 1. **Gerilmeler** — yerinde σv0, u0, σ'v0 ve σ'p; temel altındaki gerilme artışı Boussinesq
    (Newmark dikdörtgen, şerit ve daire çözümleri) ya da 2:1 yayılma ile; merkez, karakteristik
-   nokta, uzun kenar ortası ve köşede.
+   nokta, uzun kenar ortası ve köşede; dolgu altında yamuk yük için kesin çözümle tepe ortası,
+   tepe kenarı, şev ortası ve şev topuğunda.
 2. **Ani oturma** — tüm tabakalarda tabakalı elastik (Steinbrenner) ya da granüler
    tabakalarda Schmertmann (1978).
 3. **Konsolidasyon** — kil tabakalarının Cc, Cr, e0 ve σ'p ile birincil oturması; Cα ile
@@ -78,6 +79,9 @@ lythos-settle study project.settle -o ornekler.csv
 
 * **Temel:** şekil (dikdörtgen, şerit, daire), B (dairede çap), L, derinlik Df, brüt taban
   basıncı q; isteğe bağlı olarak kazılan örtü yükü düşülür (q_net = q − σv0(Df)).
+* **Dolgu** ("Dolgu (şevli)" şekli): tepe genişliği, yükseklik H, yataydan sol ve sağ şev
+  açıları, dolgunun birim hacim ağırlığı γ; yük tepe altında γ·H, topuklara doğru doğrusal
+  olarak sıfıra iner.
 * **Yeraltı suyu:** su tablası derinliği, γw.
 * **Zemin profili**, yüzeyden aşağı, her tabaka bir satır: kalınlık, granüler ya da
   kohezyonlu, γ, γdoy, E, ν; killerde ayrıca Cc, Cr, e0, OCR, cv, Cα ve tek / çift yönlü
@@ -92,7 +96,9 @@ lythos-settle study project.settle -o ornekler.csv
 |---|---|
 | dikdörtgen altında Δσ | Boussinesq'in Newmark integrasyonu, her nokta için süperpozisyon |
 | şerit / daire altında Δσ | kapalı form / kutupsal açı üzerinde kesin tek boyutlu integral |
+| dolgu altında Δσ | kesin: Flamant çizgisel yükü parçalı doğrusal (yamuk) yük üzerinde integre edilir |
 | yaklaşık Δσ | 2:1 yayılma |
+| dolgu, ani oturma | düzlem şekil değiştirmede Steinbrenner; tepe tek şerit, her şev 16 dilim |
 | ani oturma | her tabakada Steinbrenner F1, F2 (tabakalı elastik) ya da C1, C2 ve L/B'ye göre enterpole edilen etki diyagramıyla Schmertmann (1978) |
 | birincil konsolidasyon | σ'p = OCR·σ'v0'a kadar Cr, ötesinde Cc; her noktada alt tabaka alt tabaka |
 | ikincil sıkışma | U = %95'ten tasarım ömrüne Cα/(1+e0)·H·log(t/t_p); kilin aşırı konsolide kaldığı yerde Cα·Cr/Cc |

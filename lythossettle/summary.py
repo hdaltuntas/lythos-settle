@@ -75,7 +75,8 @@ def cards(analysis, lang: str = "en") -> List[dict]:
     card("time", duration(L, t90), L["card_at_life"].format(life=life) +
          f": {res['at_life']:.1f} mm", "" if math.isfinite(t90) else "na")
     card("distortion", distortion_text(res["distortion"]),
-         L["rigidity_rigid"] if res["distortion"] is None else "",
+         "" if res["distortion"] is not None else
+         L["card_dist_emb"] if analysis.embankment else L["rigidity_rigid"],
          "na" if res["distortion"] is None else "")
 
     check = res["checks"]["total"]
@@ -99,13 +100,18 @@ def results_text(analysis, lang: str = "en") -> str:
     """The whole analysis as text, in the chosen language."""
     L = _lang(lang)
     a, res = analysis, analysis.results
-    L_part = f", L = {a.L:.2f} m" if a.shape == "rectangle" else ""
-    lines = [
-        L["res_title"],
-        "-" * 78,
-        L["res_foundation"].format(shape=L["shape_" + a.shape], B=a.B, L=L_part, Df=a.Df,
-                                   rigidity=L["rigidity_" + a.rigidity]),
-        L["res_pressure"].format(q=res["q"], s=res["sigma_base"], qn=res["q_net"]),
+    lines = [L["res_title"], "-" * 78]
+    if a.embankment:
+        e = a.embankment
+        lines += [L["res_embankment"].format(c=e["crest"], h=e["height"], sl=e["slope_left"],
+                                             sr=e["slope_right"], g=e["gamma"], w=a.B),
+                  L["res_emb_load"].format(q=res["q"])]
+    else:
+        L_part = f", L = {a.L:.2f} m" if a.shape == "rectangle" else ""
+        lines += [L["res_foundation"].format(shape=L["shape_" + a.shape], B=a.B, L=L_part,
+                                             Df=a.Df, rigidity=L["rigidity_" + a.rigidity]),
+                  L["res_pressure"].format(q=res["q"], s=res["sigma_base"], qn=res["q_net"])]
+    lines += [
         L["res_methods"].format(stress=L["stress_" + a.stress_method],
                                 imm=L["immediate_" + a.immediate_method]),
         L["res_limit"].format(z=res["z_limit"], zb=res["z_limit"] - a.Df),
@@ -151,7 +157,9 @@ def results_text(analysis, lang: str = "en") -> str:
         lines.append("  " + L["res_check_dist"].format(
             x=distortion_text(check["actual"]), a=distortion_text(check["allowable"]),
             status=_status(L, check["status"])[0]))
-    if a.rigidity == "rigid":
+    if a.embankment:
+        lines.append("  " + L["res_emb_dist"])
+    elif a.rigidity == "rigid":
         lines.append("  " + L["res_rigid"])
 
     if res["warnings"]:

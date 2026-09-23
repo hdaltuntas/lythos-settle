@@ -54,10 +54,16 @@ _NORMAL = NormalDist()
 
 def available_variables(cfg: Dict[str, Any]) -> List[Tuple[str, str]]:
     """(path, group) pairs of the inputs that can be varied for this project."""
-    out = [("foundation.q", "foundation"), ("foundation.B", "foundation")]
-    if cfg.get("foundation", {}).get("shape", "rectangle") == "rectangle":
-        out.append(("foundation.L", "foundation"))
-    out += [("foundation.Df", "foundation"), ("groundwater.depth", "groundwater")]
+    shape = cfg.get("foundation", {}).get("shape", "rectangle")
+    if shape == "embankment":
+        out = [(f"embankment.{key}", "embankment")
+               for key in ("height", "gamma", "crest", "slope_left", "slope_right")]
+    else:
+        out = [("foundation.q", "foundation"), ("foundation.B", "foundation")]
+        if shape == "rectangle":
+            out.append(("foundation.L", "foundation"))
+        out.append(("foundation.Df", "foundation"))
+    out.append(("groundwater.depth", "groundwater"))
     for i, layer in enumerate(cfg.get("soil_profile", [])):
         keys = SOIL_KEYS + (CLAY_KEYS if layer.get("behaviour") == "cohesive" else [])
         out += [(f"soil_profile.{i}.{key}", layer.get("name", f"layer {i + 1}")) for key in keys]
@@ -73,7 +79,8 @@ def pretty_label(cfg: Dict[str, Any], path: str, L: Dict[str, str]) -> str:
         layers = cfg.get("soil_profile", [])
         layer = layers[index].get("name", f"{index + 1}") if index < len(layers) else parts[1]
         return f"{layer} · {name}"
-    group = {"foundation": "grp_foundation", "groundwater": "grp_water"}.get(parts[0])
+    group = {"foundation": "grp_foundation", "groundwater": "grp_water",
+             "embankment": "grp_embankment"}.get(parts[0])
     return f"{L.get(group, parts[0])} · {name}" if group else name
 
 

@@ -47,7 +47,10 @@ from .config import (
 )
 
 #: The points at which the settlement is evaluated, in display order
-POINT_KEYS = ["center", "char", "edge", "corner"]
+POINT_KEYS = ["center", "char", "edge", "corner", "shoulder", "midslope", "toe"]
+
+#: Points of the settlement profile across the section
+PROFILE_POINTS = 61
 
 #: Distance of the characteristic point from the centre, as a fraction of the
 #: half-width: 0.74 for a rectangle or a strip, 0.845 for a circle (Grasshoff)
@@ -150,26 +153,37 @@ class SettlementAnalysis:
         w = {**base["groundwater"], **cfg.get("groundwater", {})}
 
         self.shape = f["shape"] if f["shape"] in SHAPES else "rectangle"
-        self.B = _num(f, "B", 1.0)
-        self.L = _num(f, "L", self.B) if self.shape == "rectangle" else self.B
-        self.Df = _num(f, "Df", 0.0)
-        self.q = _num(f, "q", 0.0)
-        self.net_pressure = bool(f.get("net_pressure", True))
-        if self.B <= 0 or (self.shape == "rectangle" and self.L <= 0):
-            raise SettleError("err_dimensions")
-        if self.q < 0:
-            raise SettleError("err_pressure")
-        if self.Df < 0:
-            raise SettleError("err_depth")
-        if self.shape == "rectangle" and self.L < self.B:
-            self.B, self.L = self.L, self.B
-            self.warnings.append(_message("warn_swapped"))
+        self.embankment = None
+        if self.shape == "embankment":
+            self._read_embankment({**base["embankment"], **cfg.get("embankment", {})})
+        else:
+            self.B = _num(f, "B", 1.0)
+            self.L = _num(f, "L", self.B) if self.shape == "rectangle" else self.B
+            self.Df = _num(f, "Df", 0.0)
+            self.q = _num(f, "q", 0.0)
+            self.net_pressure = bool(f.get("net_pressure", True))
+            if self.B <= 0 or (self.shape == "rectangle" and self.L <= 0):
+                raise SettleError("err_dimensions")
+            if self.q < 0:
+                raise SettleError("err_pressure")
+            if self.Df < 0:
+                raise SettleError("err_depth")
+            if self.shape == "rectangle" and self.L < self.B:
+                self.B, self.L = self.L, self.B
+                self.warnings.append(_message("warn_swapped"))
 
         self.stress_method = (o["stress_method"] if o["stress_method"] in STRESS_METHODS
                               else STRESS_METHODS[0])
         self.immediate_method = (o["immediate_method"] if o["immediate_method"]
                                  in IMMEDIATE_METHODS else IMMEDIATE_METHODS[0])
         self.rigidity = o["rigidity"] if o["rigidity"] in RIGIDITY else RIGIDITY[0]
+        if self.embankment:
+            # A fill is as flexible as the ground under it, and Schmertmann's
+            # diagram is for footings: an embankment is analysed elastically.
+            self.rigidity = "flexible"
+            if self.immediate_method == "schmertmann":
+                self.immediate_method = "elastic"
+                self.warnings.append(_message("warn_emb_schmertmann"))
         self.sublayer = _num(o, "sublayer", 0.25)
         self.depth_ratio = max(0.0, _num(o, "depth_ratio", 0.1))
         self.design_life = _num(o, "design_life", 50.0)
@@ -200,6 +214,23 @@ class SettlementAnalysis:
                 continue
             if layer["E"] <= 0:
                 raise SettleError("err_layer_E", name=layer["name"])
+
+    def _read_embankment(self, e: dict) -> None:
+        """An embankment: a trapezoidal fill on the ground surface."""
+        crest, height = _num(e, "crest", 0.0), _num(e, "height", 0.0)
+        left, right = _num(e, "slope_left", 30.0), _num(e, "slope_right", 30.0)
+        gamma = _num(e, "gamma", 20.0)
+        if height <= 0 or crest < 0 or gamma <= 0 or not (0 < left <= 90 and 0 < right <= 90):
+            raise SettleError("err_embankment")
+        run_l, run_r = stress.slope_run(height, left), stress.slope_run(height, right)
+        if crest + run_l + run_r <= 0:
+            raise SettleError("err_embankment")
+        self.embankment = {"crest": crest, "height": height, "slope_left": left,
+                           "slope_right": right, "gamma": gamma, "run_left": run_l,
+                           "run_right": run_r}
+        # the fill sits on the ground surface and loads it with γ·H at most
+        self.Df, self.q, self.net_pressure = 0.0, gamma * height, False
+        self.B = self.L = crest + run_l + run_r          # width at the base
 
     def _read_layer(self, row: dict, thickness: float, gamma_w: float) -> dict:
         name = str(row.get("name") or "").strip() or "Layer"
@@ -237,6 +268,11 @@ class SettlementAnalysis:
     def points(self) -> Dict[str, tuple]:
         """Plan coordinates of the evaluation points, from the centre."""
         B, L = self.B, self.L
+        if self.embankment:
+            e = self.embankment
+            edge = e["crest"] / 2.0
+            return {"center": (0.0,), "shoulder": (edge,),
+                    "midslope": (edge + e["run_right"] / 2.0,), "toe": (edge + e["run_right"],)}
         if self.shape == "circle":
             R = B / 2.0
             return {"center": (0.0,), "char": (CHAR_CIRCLE * R,), "edge": (R,)}
@@ -260,7 +296,29 @@ class SettlementAnalysis:
 
     def influence(self, point: tuple, zb) -> np.ndarray:
         """Δσ/q at depth zb below the base, by the chosen stress method."""
+        if self.embankment:
+            e = self.embankment
+            geometry = (e["crest"], e["height"], e["slope_left"], e["slope_right"])
+            if self.stress_method == "two_to_one":
+                return stress.embankment_two_to_one(*geometry, zb)
+            return stress.embankment(*geometry, point[0], zb)
         return stress.influence(self.shape, self.B, self.L, point, zb, self.stress_method)
+
+    def elastic_factor(self, point: tuple, H, nu: float) -> np.ndarray:
+        """Settlement × E / q of an elastic layer from the base down to depth H."""
+        if self.embankment:
+            e = self.embankment
+            return stress.embankment_elastic_factor(e["crest"], e["height"], e["slope_left"],
+                                                    e["slope_right"], point[0], H, nu)
+        return stress.elastic_depth_factor(self.shape, self.B, self.L, point, H, nu)
+
+    def section_point(self, x: float) -> tuple:
+        """The plan point at offset x on the section through the centre (across B)."""
+        if self.shape == "rectangle":
+            return (x, 0.0)
+        if self.shape == "circle":
+            return (abs(x),)
+        return (x,)
 
     # ------------------------------------------------------------------ sublayers
     def _sublayers(self) -> Dict[str, np.ndarray]:
@@ -282,6 +340,7 @@ class SettlementAnalysis:
     # ------------------------------------------------------------------ run
     def run(self) -> Dict[str, Any]:
         P = self.profile
+        self._profile = None
         sub = self._sublayers()
         mid, dz, lay = sub["mid"], sub["dz"], sub["layer"]
         zb_mid, zb_top, zb_bot = mid - self.Df, sub["top"] - self.Df, sub["bot"] - self.Df
@@ -304,10 +363,10 @@ class SettlementAnalysis:
             q_net = 0.0
 
         points = self.points()
-        dsig = {key: q_net * self.influence(pt, zb_mid) for key, pt in points.items()}
+        centre = self.influence(points["center"], zb_mid) * q_net
 
         # ---- influence depth, from the centre (where the stress is largest)
-        limit_mask = dsig["center"] >= max(self.depth_ratio, 0.0) * sig_eff
+        limit_mask = centre >= max(self.depth_ratio, 0.0) * sig_eff
         if self.depth_ratio <= 0:
             active = np.ones_like(mid, dtype=bool)
             z_limit = float(sub["bot"][-1])
@@ -318,56 +377,19 @@ class SettlementAnalysis:
         else:
             active = np.zeros_like(mid, dtype=bool)
             z_limit = self.Df
-        if not compensated and dsig["center"][-1] >= 0.1 * sig_eff[-1]:
+        if not compensated and centre[-1] >= 0.1 * sig_eff[-1]:
             self.warnings.append(_message("warn_below_profile", depth=P.depth))
 
-        # ---- elastic (Steinbrenner) settlement per sublayer and point
-        elastic = {}
-        for key, pt in points.items():
-            values = np.zeros_like(mid)
-            if not compensated:
-                for i, layer in enumerate(layers):
-                    rows = np.nonzero(lay == i)[0]
-                    if rows.size == 0:
-                        continue
-                    edges = np.concatenate([zb_top[rows[:1]], zb_bot[rows]])
-                    factor = stress.elastic_depth_factor(self.shape, self.B, self.L, pt,
-                                                         edges, layer["nu"])
-                    values[rows] = q_net / layer["E"] * np.diff(factor)
-            elastic[key] = values * 1000.0                        # mm
-
-        # ---- immediate settlement
-        schm = None
-        immediate = {key: np.where(active, elastic[key], 0.0) for key in points}
-        if self.immediate_method == "schmertmann" and not compensated:
-            schm = self._schmertmann(q_net, sigma_base_eff, zb_mid, dz, lay)
-            granular_zone = (~cohesive) & (zb_mid < schm["z_end"])
-            centre_el = float(np.sum(elastic["center"][granular_zone]))
-            for key in points:
-                ratio = (float(np.sum(elastic[key][granular_zone])) / centre_el
-                         if centre_el > 0 else 1.0)
-                immediate[key] = np.where(cohesive, immediate[key], schm["s"] * ratio)
-            if schm["z_end"] > P.depth - self.Df + 1e-9:
-                self.warnings.append(_message("warn_schmertmann_zone"))
-
-        # ---- primary consolidation (cohesive layers only)
         cc = np.array([layers[i]["Cc"] for i in lay])
         cr = np.array([layers[i]["Cr"] for i in lay])
         compressible = cohesive & ((cc > 0) | (cr > 0))
-        consolidation = {}
-        for key in points:
-            strain = np.zeros_like(mid)
-            for i, layer in enumerate(layers):
-                rows = (lay == i) & compressible
-                if rows.any():
-                    strain[rows] = cons.primary_strain(sig_eff[rows], dsig[key][rows],
-                                                       sig_p[rows], layer["Cc"], layer["Cr"],
-                                                       layer["e0"])
-            consolidation[key] = np.where(active & compressible, strain * dz * 1000.0, 0.0)
+        self._ctx = {"zb_top": zb_top, "zb_bot": zb_bot, "zb_mid": zb_mid, "dz": dz,
+                     "lay": lay, "cohesive": cohesive, "compressible": compressible,
+                     "sig_eff": sig_eff, "sig_p": sig_p, "active": active, "q_net": q_net,
+                     "compensated": compensated, "schm": None, "creep": []}
 
-        # ---- per-layer time behaviour and secondary compression
+        # ---- per-layer time behaviour, and the creep strain of each clay layer
         layer_rows = []
-        secondary = {key: np.zeros_like(mid) for key in points}
         for i, layer in enumerate(layers):
             rows = lay == i
             if not rows.any():
@@ -396,17 +418,27 @@ class SettlementAnalysis:
                         # Cα/Cc is a soil constant (Mesri): where the load leaves the
                         # clay over-consolidated, creep follows the recompression line.
                         oc_factor = layer["Cr"] / layer["Cc"] if layer["Cc"] > 0 else 1.0
-                        where = rows & active
-                        for key in points:
-                            virgin = sig_eff[where] + dsig[key][where] > sig_p[where]
-                            factor = np.where(virgin, 1.0, oc_factor)
-                            loaded_here = dsig[key][where] > 0
-                            secondary[key][where] = np.where(
-                                loaded_here, strain * factor * dz[where] * 1000.0, 0.0)
+                        self._ctx["creep"].append((rows & active, strain, oc_factor))
                     else:
                         self.warnings.append(_message("warn_no_tp", name=layer["name"]))
             layer_rows.append(info)
-        secondary_pts = secondary
+
+        # ---- Schmertmann, whose footing value the other points scale
+        schm = None
+        if self.immediate_method == "schmertmann" and not compensated:
+            schm = self._schmertmann(q_net, sigma_base_eff, zb_mid, dz, lay)
+            zone = (~cohesive) & (zb_mid < schm["z_end"])
+            self._ctx.update(schm=schm, zone=zone,
+                             centre_el=float(np.sum(self._elastic_at(points["center"])[zone])))
+            if schm["z_end"] > P.depth - self.Df + 1e-9:
+                self.warnings.append(_message("warn_schmertmann_zone"))
+
+        # ---- every point, sublayer by sublayer
+        parts = {key: self._settle_at(pt) for key, pt in points.items()}
+        dsig = {key: part["dsigma"] for key, part in parts.items()}
+        immediate = {key: part["immediate"] for key, part in parts.items()}
+        consolidation = {key: part["consolidation"] for key, part in parts.items()}
+        secondary_pts = {key: part["secondary"] for key, part in parts.items()}
 
         # ---- totals at each point
         point_results = {}
@@ -432,7 +464,7 @@ class SettlementAnalysis:
         # ---- angular distortion and checks
         half = self.B / 2.0
         distortion = None
-        if self.rigidity == "flexible":
+        if self.rigidity == "flexible" and not self.embankment:
             diff = abs(point_results["center"]["total"] - point_results["edge"]["total"])
             distortion = diff / 1000.0 / half if half > 0 else 0.0
         total = point_results[gov]["total"]
@@ -464,6 +496,65 @@ class SettlementAnalysis:
             "warnings": list(self.warnings),
         }
         return self.results
+
+    # ------------------------------------------------------------------ one point
+    def _elastic_at(self, point: tuple) -> np.ndarray:
+        """Elastic (Steinbrenner) settlement of each sublayer at a point [mm]."""
+        c = self._ctx
+        values = np.zeros_like(c["zb_mid"])
+        if c["compensated"]:
+            return values
+        for i, layer in enumerate(self.profile.layers):
+            rows = np.nonzero(c["lay"] == i)[0]
+            if rows.size == 0:
+                continue
+            edges = np.concatenate([c["zb_top"][rows[:1]], c["zb_bot"][rows]])
+            factor = self.elastic_factor(point, edges, layer["nu"])
+            values[rows] = c["q_net"] / layer["E"] * np.diff(factor)
+        return values * 1000.0
+
+    def _settle_at(self, point: tuple) -> Dict[str, np.ndarray]:
+        """Stress increase and the three settlements of each sublayer at a point."""
+        c = self._ctx
+        dsig = c["q_net"] * self.influence(point, c["zb_mid"])
+        elastic = self._elastic_at(point)
+        immediate = np.where(c["active"], elastic, 0.0)
+        if c["schm"] is not None:
+            ratio = (float(np.sum(elastic[c["zone"]])) / c["centre_el"]
+                     if c["centre_el"] > 0 else 1.0)
+            immediate = np.where(c["cohesive"], immediate, c["schm"]["s"] * ratio)
+
+        strain = np.zeros_like(dsig)
+        for i, layer in enumerate(self.profile.layers):
+            rows = (c["lay"] == i) & c["compressible"]
+            if rows.any():
+                strain[rows] = cons.primary_strain(c["sig_eff"][rows], dsig[rows],
+                                                   c["sig_p"][rows], layer["Cc"], layer["Cr"],
+                                                   layer["e0"])
+        consolidation = np.where(c["active"] & c["compressible"], strain * c["dz"] * 1000.0, 0.0)
+
+        secondary = np.zeros_like(dsig)
+        for where, creep, oc_factor in c["creep"]:
+            virgin = c["sig_eff"][where] + dsig[where] > c["sig_p"][where]
+            factor = np.where(virgin, 1.0, oc_factor)
+            secondary[where] = np.where(dsig[where] > 0, creep * factor * c["dz"][where] * 1000.0,
+                                        0.0)
+        return {"dsigma": dsig, "immediate": immediate, "consolidation": consolidation,
+                "secondary": secondary}
+
+    def settlement_profile(self, n: int = PROFILE_POINTS) -> Dict[str, np.ndarray]:
+        """Settlement along the section through the centre (across B), out to
+        well beyond the loaded width [mm]. Computed once, on demand."""
+        if getattr(self, "_profile", None) is None:
+            half = self.B / 2.0
+            x = np.linspace(-2.0 * half, 2.0 * half, n)
+            parts = [self._settle_at(self.section_point(float(xi))) for xi in x]
+            out = {"x": x}
+            for key in ("immediate", "consolidation", "secondary"):
+                out[key] = np.array([float(np.sum(p[key])) for p in parts])
+            out["total"] = out["immediate"] + out["consolidation"] + out["secondary"]
+            self._profile = out
+        return self._profile
 
     # ------------------------------------------------------------------ parts
     def _layer_method(self, layer: dict) -> str:

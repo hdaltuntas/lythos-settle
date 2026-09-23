@@ -10,6 +10,7 @@ here needs a display.
     stress            σ'v0, σ'v0 + Δσ, σ'p and the influence-depth criterion
     influence         Δσ / q_net at each evaluation point, and Schmertmann's Iz
     settlement_depth  settlement of the soil below each depth (cumulative)
+    profile           settlement along the section through the centre
     time              time–settlement curve at the governing point
     points            immediate / consolidation / secondary at each point
 """
@@ -20,7 +21,7 @@ import math
 
 import numpy as np
 from matplotlib.figure import Figure
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Polygon, Rectangle
 
 from . import stress
 from .config import PLOT_PALETTE, SOIL_FILL
@@ -28,7 +29,7 @@ from .i18n import TRANSLATIONS
 from .plot_style import label_box, style_axis, style_figure
 
 #: The figures, in the order the interface offers them
-PLOT_KEYS = ["schematic", "stress", "influence", "settlement_depth", "time", "points"]
+PLOT_KEYS = ["schematic", "stress", "influence", "settlement_depth", "time", "points", "profile"]
 
 #: Isobar levels of the stress bulb
 ISOBARS = [0.1, 0.2, 0.3, 0.5, 0.7, 0.9]
@@ -84,6 +85,10 @@ class Plotter:
     def _section_influence(self, x, zb):
         """Δσ/q along the section through the centre (across B)."""
         a = self.a
+        if a.embankment:
+            e = a.embankment
+            return stress.embankment(e["crest"], e["height"], e["slope_left"], e["slope_right"],
+                                     x, zb)
         if a.shape == "rectangle":
             return stress.rectangle(a.B, a.L, x, 0.0, zb)
         if a.shape == "strip":
@@ -113,20 +118,10 @@ class Plotter:
                     f"E = {layer['E_MPa']:g} MPa", fontsize=7.5, color=th["fg"], va="center",
                     ha="left", zorder=4, bbox=label_box(th, 0.8))
 
-        # the excavation and the footing
-        ax.add_patch(Rectangle((-a.B / 2.0, 0.0), a.B, a.Df, facecolor=th["panel"],
-                               edgecolor="none", zorder=1))
-        thick = max(0.08 * a.B, 0.3)
-        ax.add_patch(Rectangle((-a.B / 2.0, a.Df - thick), a.B, thick,
-                               facecolor=PLOT_PALETTE["footing"], edgecolor=th["fg_dim"],
-                               lw=1.0, zorder=5))
-        arrows = np.linspace(-a.B / 2.0, a.B / 2.0, 9)
-        for x in arrows:
-            ax.annotate("", xy=(x, a.Df - thick), xytext=(x, a.Df - thick - 0.12 * z_max),
-                        arrowprops=dict(arrowstyle="-|>", color=PLOT_PALETTE["total"], lw=1.0),
-                        zorder=6)
-        ax.text(0.0, a.Df - thick - 0.13 * z_max, L["lg_qnet"].format(q=res["q_net"]),
-                ha="center", va="bottom", fontsize=8.5, color=th["fg"], zorder=6)
+        if a.embankment:
+            top = self._draw_embankment(ax, th, z_max)
+        else:
+            top = self._draw_footing(ax, th, z_max)
 
         # water table
         if 0 <= a.profile.zw <= z_max:
@@ -151,12 +146,82 @@ class Plotter:
                     va="bottom", color=PLOT_PALETTE["limit"], zorder=6)
 
         ax.set_xlim(-x_max, x_max)
-        ax.set_ylim(z_max, min(0.0, a.Df - thick - 0.2 * z_max))
+        ax.set_ylim(z_max, top)
         ax.set_xlabel(L["ax_x"])
         ax.set_ylabel(L["ax_depth"])
         ax.text(0.01, -0.09, L["lg_isobar"], transform=ax.transAxes, fontsize=7.5,
                 color=th["fg_dim"])
         self._title(fig, th, "schematic")
+
+    def _draw_footing(self, ax, th, z_max) -> float:
+        """The excavation, the footing and its pressure; returns the top of the view."""
+        a, res, L = self.a, self.res, self.L
+        ax.add_patch(Rectangle((-a.B / 2.0, 0.0), a.B, a.Df, facecolor=th["panel"],
+                               edgecolor="none", zorder=1))
+        thick = max(0.08 * a.B, 0.3)
+        ax.add_patch(Rectangle((-a.B / 2.0, a.Df - thick), a.B, thick,
+                               facecolor=PLOT_PALETTE["footing"], edgecolor=th["fg_dim"],
+                               lw=1.0, zorder=5))
+        for x in np.linspace(-a.B / 2.0, a.B / 2.0, 9):
+            ax.annotate("", xy=(x, a.Df - thick), xytext=(x, a.Df - thick - 0.12 * z_max),
+                        arrowprops=dict(arrowstyle="-|>", color=PLOT_PALETTE["total"], lw=1.0),
+                        zorder=6)
+        ax.text(0.0, a.Df - thick - 0.13 * z_max, L["lg_qnet"].format(q=res["q_net"]),
+                ha="center", va="bottom", fontsize=8.5, color=th["fg"], zorder=6)
+        return min(0.0, a.Df - thick - 0.2 * z_max)
+
+    def _draw_embankment(self, ax, th, z_max) -> float:
+        """The fill on the ground surface; returns the top of the view."""
+        a, res, L = self.a, self.res, self.L
+        e = a.embankment
+        xs = [-e["crest"] / 2 - e["run_left"], -e["crest"] / 2, e["crest"] / 2,
+              e["crest"] / 2 + e["run_right"]]
+        ax.add_patch(Polygon([(xs[0], 0.0), (xs[1], -e["height"]), (xs[2], -e["height"]),
+                              (xs[3], 0.0)], closed=True, facecolor=PLOT_PALETTE["fill"],
+                             edgecolor=th["fg_dim"], lw=1.0, alpha=0.9, zorder=5))
+        ax.text(0.0, -e["height"] / 2.0, L["lg_emb_load"].format(q=res["q_net"]), ha="center",
+                va="center", fontsize=8.5, color="#1F2933", zorder=6)
+        ax.axhline(0.0, color=th["fg_dim"], lw=0.8, zorder=2)
+        return -e["height"] - 0.12 * z_max
+
+    def _profile(self, fig, th):
+        a, res, L = self.a, self.res, self.L
+        prof = a.settlement_profile()
+        ax = fig.add_subplot(111)
+        style_axis(ax, th)
+        ax.grid(True, color=th["border"], lw=0.6)
+        x = prof["x"]
+        c1 = prof["immediate"]
+        c2 = c1 + prof["consolidation"]
+        c3 = c2 + prof["secondary"]
+        ax.fill_between(x, 0, c1, color=PLOT_PALETTE["immediate"], alpha=0.3, lw=0)
+        ax.fill_between(x, c1, c2, color=PLOT_PALETTE["consolidation"], alpha=0.3, lw=0)
+        ax.fill_between(x, c2, c3, color=PLOT_PALETTE["secondary"], alpha=0.3, lw=0)
+        ax.plot(x, c1, color=PLOT_PALETTE["immediate"], lw=1.4, label=L["head_immediate"])
+        ax.plot(x, c2, color=PLOT_PALETTE["consolidation"], lw=1.4,
+                label=f"+ {L['head_consolidation']}")
+        ax.plot(x, c3, color=PLOT_PALETTE["total"], lw=2.0, label=f"+ {L['head_secondary']}")
+        for key, p in res["points"].items():
+            ax.plot([p["coords"][0]], [p["total"]], "o", color=PLOT_PALETTE.get(key, th["accent"]),
+                    ms=6, zorder=5, label=L["point_" + key])
+        if a.s_allow > 0:
+            ax.axhline(a.s_allow, color=PLOT_PALETTE["allowable"], lw=1.0, ls="-.",
+                       label=L["lg_allow"])
+        # the loaded width, as a band along the top of the plot
+        if a.embankment:
+            e = a.embankment
+            edges = [-e["crest"] / 2 - e["run_left"], e["crest"] / 2 + e["run_right"]]
+        else:
+            edges = [-a.B / 2.0, a.B / 2.0]
+        ax.axvspan(*edges, color=PLOT_PALETTE["fill" if a.embankment else "footing"],
+                   alpha=0.12, lw=0, zorder=0)
+        top = max(float(np.max(c3)), a.s_allow if a.s_allow > 0 else 0.0, 1.0)
+        ax.set_ylim(top * 1.1, 0.0)
+        ax.set_xlim(x[0], x[-1])
+        ax.set_xlabel(L["ax_x"])
+        ax.set_ylabel(L["ax_settlement"])
+        self._legend(ax, th, loc="lower right", ncol=2)
+        self._title(fig, th, "profile")
 
     def _stress(self, fig, th):
         a, res, L = self.a, self.res, self.L

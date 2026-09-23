@@ -211,3 +211,107 @@ def elastic_depth_factor(shape: str, B: float, L: float, point: tuple, H,
     result = _signed(steinbrenner_corner, -B_ / 2 - x, B_ / 2 - x,
                      -L_ / 2 - y, L_ / 2 - y, H, nu)
     return np.zeros_like(H) + result
+
+
+# --------------------------------------------------------------------------- #
+#  Embankments: trapezoidal strip loads (plane strain)
+# --------------------------------------------------------------------------- #
+
+#: Half-length of a strip treated as a rectangle for plane strain [m]; the
+#: Steinbrenner factors are converged to machine precision long before it
+PLANE_STRAIN_HALF_LENGTH = 1.0e5
+
+#: Slices per slope when an embankment's elastic settlement is superposed
+EMBANKMENT_SLICES = 16
+
+
+def slope_run(height: float, angle: float) -> float:
+    """Horizontal run of a slope of the given angle (degrees from horizontal)."""
+    if angle >= 90.0:
+        return 0.0
+    return height / math.tan(math.radians(angle))
+
+
+def embankment_vertices(crest: float, height: float, slope_left: float,
+                        slope_right: float) -> tuple:
+    """The load profile of an embankment as vertices (x, p/p_max), centred on
+    the crest: zero at the toes, full over the crest."""
+    run_l, run_r = slope_run(height, slope_left), slope_run(height, slope_right)
+    xs = [-crest / 2 - run_l, -crest / 2, crest / 2, crest / 2 + run_r]
+    return xs, [0.0, 1.0, 1.0, 0.0]
+
+
+def linear_strip(xs, ps, x: float, z) -> np.ndarray:
+    """Δσz/p under a piecewise-linear strip load p(ξ) given by vertices (xs, ps).
+
+    Integrating Flamant's line load 2p z³/(π((ξ−x)² + z²)²) over a segment
+    where p = A + Bξ gives, with u = ξ − x,
+        (A + Bx)·[atan(u/z) + uz/(u² + z²)]/π − B·z³/(π(u² + z²))
+    between the ends of the segment: exact, so no quadrature is needed.
+    """
+    z = _z(z)
+    total = np.zeros_like(z)
+    for (xa, pa), (xb, pb) in zip(zip(xs[:-1], ps[:-1]), zip(xs[1:], ps[1:])):
+        if xb - xa <= 1e-12:
+            continue
+        slope = (pb - pa) / (xb - xa)
+        level = pa - slope * xa + slope * x          # A + B·x
+
+        def F(u):
+            return (level * (np.arctan(u / z) + u * z / (u * u + z * z))
+                    - slope * z ** 3 / (u * u + z * z)) / np.pi
+
+        total = total + F(xb - x) - F(xa - x)
+    return total
+
+
+def embankment(crest: float, height: float, slope_left: float, slope_right: float,
+               x: float, z) -> np.ndarray:
+    """Δσz/(γ·H) at offset x from the crest centre, depth z below the ground."""
+    xs, ps = embankment_vertices(crest, height, slope_left, slope_right)
+    return linear_strip(xs, ps, x, z)
+
+
+def embankment_two_to_one(crest: float, height: float, slope_left: float,
+                          slope_right: float, z) -> np.ndarray:
+    """Δσz/(γ·H) by the 2:1 spread of the equivalent uniform strip (same load)."""
+    width = crest + 0.5 * (slope_run(height, slope_left) + slope_run(height, slope_right))
+    z = _z(z)
+    return width / (width + z) if width > 0 else np.zeros_like(z)
+
+
+def plane_strip_elastic(x1: float, x2: float, H, nu: float) -> np.ndarray:
+    """Settlement × E / p at the origin under a uniform strip [x1, x2] × (−∞, ∞)
+    on a layer of thickness H: Steinbrenner on a very long rectangle."""
+    H = np.atleast_1d(np.asarray(H, dtype=float))
+    Lh = PLANE_STRAIN_HALF_LENGTH
+    return np.zeros_like(H) + _signed(steinbrenner_corner, x1, x2, -Lh, Lh, H, nu)
+
+
+def embankment_elastic_factor(crest: float, height: float, slope_left: float,
+                              slope_right: float, x: float, H, nu: float,
+                              slices: int = EMBANKMENT_SLICES) -> np.ndarray:
+    """Settlement × E / (γ·H) at offset x under an embankment, for an elastic layer
+    from the ground down to depth H.
+
+    The crest is one uniform strip; each slope is cut into slices, each a
+    uniform strip carrying the load at its middle. The solution is linear in
+    the load, so the slices superpose.
+    """
+    H = np.atleast_1d(np.asarray(H, dtype=float))
+    total = np.zeros_like(H)
+    if crest > 0:
+        total = total + plane_strip_elastic(-crest / 2 - x, crest / 2 - x, H, nu)
+    for run, side in ((slope_run(height, slope_left), -1.0),
+                      (slope_run(height, slope_right), 1.0)):
+        if run <= 0:
+            continue
+        width = run / slices
+        for k in range(slices):
+            # distance from the crest edge to the slice's near and far sides
+            near, far = k * width, (k + 1) * width
+            weight = 1.0 - (k + 0.5) / slices
+            a = side * (crest / 2 + near) - x
+            b = side * (crest / 2 + far) - x
+            total = total + weight * plane_strip_elastic(min(a, b), max(a, b), H, nu)
+    return total
