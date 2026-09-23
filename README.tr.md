@@ -2,7 +2,7 @@
 
 # Lythos Settle
 
-[![Tests](https://github.com/hdaltuntas/lyrhos-settle/actions/workflows/tests.yml/badge.svg)](https://github.com/hdaltuntas/lyrhos-settle/actions/workflows/tests.yml)
+[![Tests](https://github.com/hdaltuntas/lythos-settle/actions/workflows/tests.yml/badge.svg)](https://github.com/hdaltuntas/lythos-settle/actions/workflows/tests.yml)
 
 Tarayıcıdan sürülen, sığ temellerin oturma analizi. Tabakalı bir zemin profili üzerindeki
 dikdörtgen, şerit ya da dairesel bir temelin **ne kadar** ve **ne hızla** oturacağı

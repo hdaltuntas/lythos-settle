@@ -53,10 +53,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hdaltuntas/lyrhos-settle"
-Repository = "https://github.com/hdaltuntas/lyrhos-settle"
-Issues = "https://github.com/hdaltuntas/lyrhos-settle/issues"
-Releasing = "https://github.com/hdaltuntas/lyrhos-settle/blob/main/docs/releasing.md"
+Homepage = "https://github.com/hdaltuntas/lythos-settle"
+Repository = "https://github.com/hdaltuntas/lythos-settle"
+Issues = "https://github.com/hdaltuntas/lythos-settle/issues"
+Releasing = "https://github.com/hdaltuntas/lythos-settle/blob/main/docs/releasing.md"
 
 [project.scripts]
 lythos-settle = "lythossettle.cli:main"
