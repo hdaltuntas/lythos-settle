@@ -1,4 +1,4 @@
-[English](README.md) | **Türkçe**
+[English](https://github.com/hdaltuntas/lythos-settle/blob/main/README.md) | **Türkçe**
 
 # Lythos Settle
 
@@ -39,11 +39,11 @@ dışında hiçbir bağımlılık getirmez.
 
 | Sonuç özeti | Zaman–oturma |
 |---|---|
-| ![Sonuç özeti](screenshots/settle_summary.png) | ![Zaman–oturma](screenshots/settle_time.png) |
+| ![Sonuç özeti](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_summary.png) | ![Zaman–oturma](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_time.png) |
 
 | Güvenilirlik çalışması | Derinlikle oturma, koyu tema, Türkçe |
 |---|---|
-| ![Çalışma](screenshots/settle_study.png) | ![Derinlikle oturma](screenshots/settle_depth_dark_tr.png) |
+| ![Çalışma](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_study.png) | ![Derinlikle oturma](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_depth_dark_tr.png) |
 
 ## Kurulum ve çalıştırma
 
@@ -100,7 +100,7 @@ lythos-settle study project.settle -o ornekler.csv
 | rijit temel | karakteristik noktanın oturması (0.74·B/2, 0.74·L/2; 0.845·R) |
 | açısal distorsiyon | (s_merkez − s_kenar) / (B/2) |
 
-Türetmeler ve sınırları [docs/theory.md](docs/theory.md) dosyasındadır.
+Türetmeler ve sınırları [docs/theory.md](https://github.com/hdaltuntas/lythos-settle/blob/main/docs/theory.md) dosyasındadır.
 
 ## Raporlar
 
@@ -119,4 +119,4 @@ ruff check .
 
 ## Lisans
 
-[MIT](LICENSE) © 2026 Hasan Deniz Altuntaş
+[MIT](https://github.com/hdaltuntas/lythos-settle/blob/main/LICENSE) © 2026 Hasan Deniz Altuntaş

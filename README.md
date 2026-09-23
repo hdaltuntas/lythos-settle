@@ -1,4 +1,4 @@
-**English** | [Türkçe](README.tr.md)
+**English** | [Türkçe](https://github.com/hdaltuntas/lythos-settle/blob/main/README.tr.md)
 
 # Lythos Settle
 
@@ -40,11 +40,11 @@ standard library.
 
 | Results summary | Time–settlement |
 |---|---|
-| ![Results summary](screenshots/settle_summary.png) | ![Time–settlement](screenshots/settle_time.png) |
+| ![Results summary](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_summary.png) | ![Time–settlement](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_time.png) |
 
 | Reliability study | Settlement with depth, dark theme, Turkish |
 |---|---|
-| ![Study](screenshots/settle_study.png) | ![Settlement with depth](screenshots/settle_depth_dark_tr.png) |
+| ![Study](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_study.png) | ![Settlement with depth](https://raw.githubusercontent.com/hdaltuntas/lythos-settle/main/screenshots/settle_depth_dark_tr.png) |
 
 ## Install & run
 
@@ -109,7 +109,7 @@ the browser can be re-run unattended.
 | rigid foundation | settlement of the characteristic point (0.74·B/2, 0.74·L/2; 0.845·R) |
 | angular distortion | (s_centre − s_edge) / (B/2) |
 
-The derivations and their limits are in [docs/theory.md](docs/theory.md).
+The derivations and their limits are in [docs/theory.md](https://github.com/hdaltuntas/lythos-settle/blob/main/docs/theory.md).
 
 ## Figures
 
@@ -160,9 +160,9 @@ clay layer, Schmertmann by hand), the report in all three formats, the input sch
 file round-trips, and the interface itself — the session and the HTTP layer both, so the
 browser is exercised without a browser.
 
-Releasing to PyPI is described in [docs/releasing.md](docs/releasing.md);
+Releasing to PyPI is described in [docs/releasing.md](https://github.com/hdaltuntas/lythos-settle/blob/main/docs/releasing.md);
 `tools/upload_to_pypi.py` does it from an editor, without a terminal.
 
 ## License
 
-[MIT](LICENSE) © 2026 Hasan Deniz Altuntaş
+[MIT](https://github.com/hdaltuntas/lythos-settle/blob/main/LICENSE) © 2026 Hasan Deniz Altuntaş
