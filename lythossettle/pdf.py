@@ -52,6 +52,9 @@ OK = colors.HexColor("#1E8449")
 BAD = colors.HexColor("#C0392B")
 
 MARGIN = 15 * mm
+
+#: Tables with at most this many rows are kept on one page
+SHORT_TABLE = 25
 PAGE = A4
 
 
@@ -137,6 +140,8 @@ def _styles() -> Dict[str, ParagraphStyle]:
         "h3": ParagraphStyle("h3", parent=body, fontName=bold, fontSize=10.5, leading=14,
                              spaceBefore=9, spaceAfter=3),
         "body": body,
+        # a caption that introduces the table or figure after it
+        "lead": ParagraphStyle("lead", parent=body, fontName=bold, spaceBefore=4, spaceAfter=2),
         "cell": ParagraphStyle("cell", parent=body, fontSize=8.2, leading=10.5),
         "head": ParagraphStyle("head", parent=body, fontName=bold, fontSize=8.2,
                                leading=10.5),
@@ -212,34 +217,60 @@ _TOKENS = re.compile(
 
 def flowables(html_text: str, figures: Dict[str, bytes], st: Dict[str, ParagraphStyle],
               width: float, height: float) -> list:
-    """The report HTML as a list of reportlab flowables."""
+    """The report HTML as a list of reportlab flowables.
+
+    Headings and the captions that introduce a table or a figure are held back
+    and bound to whatever follows them, so none is left alone at the foot of a
+    page; a short table is never split across two pages.
+    """
     story: list = []
+    held: list = []                          # headings waiting for their content
+
+    def add(first, *rest, keep: bool = False) -> None:
+        # One KeepTogether at most: reportlab measures a nested one as
+        # infinitely tall, and every group would then start a new page.
+        if held:
+            story.append(KeepTogether(held + [first]))
+            held.clear()
+        else:
+            story.append(KeepTogether([first]) if keep else first)
+        story.extend(rest)
+
     for token in _TOKENS.split(html_text):
         if token.startswith("<h1>"):
-            story.append(Paragraph(_plain(token), st["title"]))
+            add(Paragraph(_plain(token), st["title"]))
         elif token.startswith("<h2"):
-            if "page-break-before" in token and story:
+            if "page-break-before" in token and (story or held):
+                story.extend(held)
+                held.clear()
                 story.append(PageBreak())
-            story.append(Paragraph(_plain(token), st["h2"]))
+            held.append(Paragraph(_plain(token), st["h2"]))
         elif token.startswith("<h3>"):
-            story.append(Paragraph(_plain(token), st["h3"]))
+            held.append(Paragraph(_plain(token), st["h3"]))
         elif token.startswith("<li>"):
-            story.append(Paragraph(_inline(token), st["bullet"], bulletText="•"))
+            add(Paragraph(_inline(token), st["bullet"], bulletText="•"))
         elif token.startswith("<table"):
             table = _table_flowable(token, st, width)
             if table is not None:
-                story += [table, Spacer(1, 6)]
+                # A lone row on the next page reads as a different table; long
+                # tables break, repeating their header.
+                rows = token.count("<tr>")
+                add(table, Spacer(1, 6), keep=rows <= SHORT_TABLE)
         elif token.startswith("<p"):
             figure = re.search(r"src='fig://([a-z_]+)'", token)
             if figure and figure.group(1) in figures:
-                story.append(KeepTogether(
-                    _image_flowable(figures[figure.group(1)], width, height * 0.82)))
-                story.append(Spacer(1, 8))
+                add(_image_flowable(figures[figure.group(1)], width, height * 0.82),
+                    Spacer(1, 8))
+            elif "class='lead'" in token:
+                text = _inline(token)
+                if text:
+                    held.append(Paragraph(text, st["lead"]))
             else:
                 style = st["meta"] if "class='meta'" in token else st["body"]
                 text = _inline(token)
                 if text:
-                    story.append(Paragraph(text, style))
+                    add(Paragraph(text, style))
+    story.extend(held)
     return story
 
 

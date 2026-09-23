@@ -46,6 +46,7 @@ TEXTS = {
         "net": "Net pressure (overburden deducted)", "zw": "Water table depth",
         "gw": "Unit weight of water γw", "yes": "yes", "no": "no",
         "layer": "Layer", "type": "Type", "top": "Top", "bottom": "Bottom",
+        "clay_params": "Consolidation parameters of the cohesive layers",
         "stress_method": "Stress distribution", "imm_method": "Immediate settlement",
         "rigidity": "Foundation rigidity", "sublayer": "Sublayer thickness",
         "depth_ratio": "Influence depth criterion Δσ / σ'v0", "life": "Design life",
@@ -119,6 +120,7 @@ TEXTS = {
         "net": "Net basınç (örtü yükü düşülmüş)", "zw": "Su tablası derinliği",
         "gw": "Suyun birim hacim ağırlığı γw", "yes": "evet", "no": "hayır",
         "layer": "Tabaka", "type": "Tür", "top": "Üst", "bottom": "Alt",
+        "clay_params": "Kohezyonlu tabakaların konsolidasyon parametreleri",
         "stress_method": "Gerilme dağılımı", "imm_method": "Ani oturma",
         "rigidity": "Temel rijitliği", "sublayer": "Alt tabaka kalınlığı",
         "depth_ratio": "Etki derinliği ölçütü Δσ / σ'v0", "life": "Tasarım ömrü",
@@ -343,21 +345,22 @@ def build_html(analysis, lang: str, figures: Dict[str, bytes], img_src=None,
     parts.append(_kv_table(T, rows))
 
     parts.append(f"<h3>{T['sec_soil']}</h3>")
-    rows = []
-    for i, lay in enumerate(a.profile.layers, 1):
-        clay = lay["behaviour"] == "cohesive"
-        dash = "—"
-        rows.append([i, _esc(lay["name"]), L["behaviour_" + lay["behaviour"]],
-                     _f(lay["top"]), _f(lay["bottom"]), _f(lay["gamma"], 1),
-                     _f(lay["gamma_sat"], 1), _f(lay["E_MPa"], 1), _f(lay["nu"]),
-                     _f(lay["Cc"], 3) if clay else dash, _f(lay["Cr"], 3) if clay else dash,
-                     _f(lay["e0"]) if clay else dash, _f(lay["OCR"]) if clay else dash,
-                     _f(lay["cv"]) if clay else dash, _f(lay["Calpha"], 4) if clay else dash,
-                     L["drainage_" + lay["drainage"]] if clay else dash])
+    rows = [[i, _esc(lay["name"]), L["behaviour_" + lay["behaviour"]], _f(lay["top"]),
+             _f(lay["bottom"]), _f(lay["gamma"], 1), _f(lay["gamma_sat"], 1),
+             _f(lay["E_MPa"], 1), _f(lay["nu"])]
+            for i, lay in enumerate(a.profile.layers, 1)]
     parts.append(_table(["#", T["layer"], T["type"], f"{T['top']} (m)", f"{T['bottom']} (m)",
-                         "γ", L["col_gamma_sat"].split(" ")[0], "E (MPa)", "ν", "Cc", "Cr", "e0",
-                         "OCR", L["col_cv"], "Cα", L["col_drainage"]], rows,
-                        [3, 14, 8, 5, 5, 5, 5, 6, 4, 5, 5, 5, 5, 7, 6, 8]))
+                         "γ (kN/m³)", L["col_gamma_sat"], "E (MPa)", "ν"], rows,
+                        [4, 24, 12, 8, 8, 11, 12, 11, 10]))
+    clays = [(i, lay) for i, lay in enumerate(a.profile.layers, 1)
+             if lay["behaviour"] == "cohesive"]
+    if clays:
+        parts.append(f"<p class='lead'><b>{_esc(T['clay_params'])}</b></p>")
+        rows = [[i, _esc(lay["name"]), _f(lay["Cc"], 3), _f(lay["Cr"], 3), _f(lay["e0"]),
+                 _f(lay["OCR"]), _f(lay["cv"]), _f(lay["Calpha"], 4),
+                 L["drainage_" + lay["drainage"]]] for i, lay in clays]
+        parts.append(_table(["#", T["layer"], "Cc", "Cr", "e0", "OCR", L["col_cv"], "Cα",
+                             L["col_drainage"]], rows, [4, 24, 8, 8, 8, 8, 14, 10, 16]))
 
     parts.append(f"<h3>{T['sec_opts']}</h3>")
     parts.append(_kv_table(T, [
@@ -454,7 +457,7 @@ def build_html(analysis, lang: str, figures: Dict[str, bytes], img_src=None,
     # ---------------- 4. figures
     parts.append(f"<h2 style='page-break-before:always'>{T['sec_figs']}</h2>")
     for key in [k for k in figures if not k.startswith("study_")]:
-        parts.append(f"<p><b>{_esc(L.get(f'fig_{key}', key))}</b></p>")
+        parts.append(f"<p class='lead'><b>{_esc(L.get(f'fig_{key}', key))}</b></p>")
         parts.append(f"<p><img src='{img_src(key)}' width='640'></p>")
 
     # ---------------- 5/6. warnings & notes
