@@ -38,11 +38,13 @@ ISOBARS = [0.1, 0.2, 0.3, 0.5, 0.7, 0.9]
 class Plotter:
     """Draws the figures of one finished `SettlementAnalysis`."""
 
-    def __init__(self, analysis, lang: str = "en", theme: str = "light"):
+    def __init__(self, analysis, lang: str = "en", theme: str = "light", titles: bool = True):
         self.a = analysis
         self.res = analysis.results
         self.L = TRANSLATIONS.get(lang, TRANSLATIONS["en"])
-        self.theme = theme if theme in ("light", "dark") else "light"
+        self.theme = theme if theme in ("light", "dark", "paper") else "light"
+        # The report writes each figure's name above it; there the figure goes untitled.
+        self.titles = titles
 
     # ------------------------------------------------------------------ entry
     def draw(self, key: str, fig: Figure) -> None:
@@ -53,6 +55,8 @@ class Plotter:
 
     # ------------------------------------------------------------------ helpers
     def _title(self, fig, th, key):
+        if not self.titles:
+            return
         info = self.a.config.get("project_info", {}).get("title", "")
         fig.suptitle(self.L[f"fig_{key}"], color=th["fg"], fontsize=13.5, fontfamily=TITLE_FONT,
                      x=0.02, ha="left")

@@ -35,6 +35,8 @@ THEMES = {
                   fg_dim="#73726C", border="#E3E0D5", hover="#F0EEE6", btn="#F0EEE6",
                   muted="#B7B4AA", accent=ACCENT, accent_hover="#B0532F"),
 }
+# The report's figures: the light palette on white paper.
+THEMES["paper"] = dict(THEMES["light"], bg="#FFFFFF", panel="#FFFFFF")
 
 # Semantic colours: the same quantity is the same colour in every figure. Warm and
 # muted, to sit on the paper-coloured page; terracotta marks the total.
@@ -53,6 +55,7 @@ SOIL_FILL = {
     "light": {"granular": "#E3C98F", "cohesive": "#A7B8A0"},
     "dark": {"granular": "#8A7250", "cohesive": "#5E6E58"},
 }
+SOIL_FILL["paper"] = SOIL_FILL["light"]
 
 DEFAULT_CONFIG = {
     "project_info": {

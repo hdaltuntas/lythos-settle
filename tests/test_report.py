@@ -60,3 +60,19 @@ def test_a_study_becomes_section_seven(analysis, tmp_path):
     assert "study_tornado" in "".join(figures)
     report.export_pdf(str(tmp_path / "s.pdf"), analysis, "en", study)
     assert (tmp_path / "s.pdf").stat().st_size > 10000
+
+
+def test_report_figures_are_white_and_leave_the_title_to_the_report(analysis):
+    from matplotlib.figure import Figure
+
+    from lythossettle.plotting import PLOT_KEYS, Plotter
+
+    for key in PLOT_KEYS:
+        fig = Figure()
+        Plotter(analysis, "en", "paper", titles=False).draw(key, fig)
+        assert fig.get_facecolor()[:3] == (1.0, 1.0, 1.0), key
+        assert fig._suptitle is None, key
+    # the interface keeps its titled, paper-coloured figures
+    fig = Figure()
+    Plotter(analysis, "en", "light").draw("schematic", fig)
+    assert fig._suptitle is not None and fig.get_facecolor()[:3] != (1.0, 1.0, 1.0)

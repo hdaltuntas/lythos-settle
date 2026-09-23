@@ -254,8 +254,9 @@ def _png(fig: Figure, dpi: int) -> bytes:
 
 
 def render_figures(analysis, lang: str, keys=PLOT_KEYS, dpi: int = 130) -> Dict[str, bytes]:
-    """The report figures as PNG bytes (off-screen, light theme)."""
-    plotter = Plotter(analysis, lang, "light")
+    """The report figures as PNG bytes (off-screen, white, untitled)."""
+    # white paper, and no title inside: the report prints the figure's name above it
+    plotter = Plotter(analysis, lang, "paper", titles=False)
     out = {}
     for key in keys:
         fig = Figure(figsize=(10, 7), dpi=dpi)
@@ -275,7 +276,7 @@ def render_study_figures(study, lang: str, dpi: int = 110) -> Dict[str, bytes]:
     out = {}
     for view in views:
         fig = Figure(figsize=(10, 7), dpi=dpi)
-        draw[view](fig, study, L, "s_total")
+        draw[view](fig, study, L, "s_total", theme="paper")
         out[f"study_{view}"] = _png(fig, dpi)
     return out
 
