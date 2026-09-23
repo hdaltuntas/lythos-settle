@@ -42,14 +42,14 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-#: Report colors, the same family as the HTML stylesheet in report.py
-NAVY = colors.HexColor("#1F4E79")
-INK = colors.HexColor("#222222")
-GREY = colors.HexColor("#555555")
-HEAD_BG = colors.HexColor("#E8EEF6")
-LINE = colors.HexColor("#B8C4D6")
-OK = colors.HexColor("#1E8449")
-BAD = colors.HexColor("#C0392B")
+#: Report colours: the interface's palette, as in the HTML stylesheet in report.py
+ACCENT = colors.HexColor("#C6613F")     # terracotta: section headings
+INK = colors.HexColor("#141413")
+GREY = colors.HexColor("#73726C")
+HEAD_BG = colors.HexColor("#F0EEE6")
+LINE = colors.HexColor("#E3E0D5")
+OK = colors.HexColor("#3F7F4F")
+BAD = colors.HexColor("#B0413E")
 
 MARGIN = 15 * mm
 
@@ -79,6 +79,28 @@ def _font_candidates() -> List[Tuple[str, str, str]]:
         ("Arial", "/Library/Fonts/Arial.ttf", "/Library/Fonts/Arial Bold.ttf"),
     ]
     return candidates
+
+
+def serif_font() -> str:
+    """Registers and returns a Unicode serif for the headings (DejaVu Serif, which
+    Matplotlib ships); the sans body font when there is none."""
+    paths = []
+    try:
+        import matplotlib
+        paths.append(os.path.join(matplotlib.get_data_path(), "fonts", "ttf", "DejaVuSerif.ttf"))
+    except Exception:                        # pragma: no cover - no Matplotlib data
+        pass
+    paths.append("/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf")
+    for path in paths:
+        if not os.path.exists(path):
+            continue
+        try:
+            if "DejaVuSerif" not in pdfmetrics.getRegisteredFontNames():
+                pdfmetrics.registerFont(TTFont("DejaVuSerif", path))
+            return "DejaVuSerif"
+        except Exception:                    # pragma: no cover - unreadable font file
+            continue
+    return fonts()[0]
 
 
 def fonts() -> Tuple[str, str]:
@@ -126,22 +148,23 @@ def _plain(text: str) -> str:
 
 def _styles() -> Dict[str, ParagraphStyle]:
     regular, bold = fonts()
+    serif = serif_font()
     body = ParagraphStyle("body", fontName=regular, fontSize=9, leading=12,
                           textColor=INK, alignment=TA_LEFT)
     return {
         "font": regular, "bold": bold,
-        "title": ParagraphStyle("title", parent=body, fontName=bold, fontSize=17,
-                                leading=21, textColor=NAVY, spaceAfter=2),
+        "title": ParagraphStyle("title", parent=body, fontName=serif, fontSize=19,
+                                leading=24, textColor=INK, spaceAfter=3),
         "meta": ParagraphStyle("meta", parent=body, fontSize=8.5, leading=12,
                                textColor=GREY, spaceAfter=10),
-        "h2": ParagraphStyle("h2", parent=body, fontName=bold, fontSize=12.5, leading=16,
-                             textColor=NAVY, spaceBefore=14, spaceAfter=4,
+        "h2": ParagraphStyle("h2", parent=body, fontName=serif, fontSize=14, leading=18,
+                             textColor=ACCENT, spaceBefore=14, spaceAfter=4,
                              borderWidth=0, borderPadding=0),
-        "h3": ParagraphStyle("h3", parent=body, fontName=bold, fontSize=10.5, leading=14,
+        "h3": ParagraphStyle("h3", parent=body, fontName=serif, fontSize=11.5, leading=15,
                              spaceBefore=9, spaceAfter=3),
         "body": body,
         # a caption that introduces the table or figure after it
-        "lead": ParagraphStyle("lead", parent=body, fontName=bold, spaceBefore=4, spaceAfter=2),
+        "lead": ParagraphStyle("lead", parent=body, fontName=serif, fontSize=10, spaceBefore=4, spaceAfter=2),
         "cell": ParagraphStyle("cell", parent=body, fontSize=8.2, leading=10.5),
         "head": ParagraphStyle("head", parent=body, fontName=bold, fontSize=8.2,
                                leading=10.5),

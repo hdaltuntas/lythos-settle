@@ -193,16 +193,22 @@ TEXTS = {
     },
 }
 
+#: The interface's palette: warm paper, ink, terracotta; serif headings
 _CSS = """
-body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #222; }
-h1 { font-size: 18pt; color: #1F4E79; margin-bottom: 2px; }
-h2 { font-size: 13pt; color: #1F4E79; border-bottom: 1px solid #1F4E79; margin-top: 18px; }
-h3 { font-size: 11pt; color: #333; margin-top: 12px; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+       font-size: 10pt; color: #141413; }
+h1, h2, h3 { font-family: 'Tiempos Text', 'Source Serif 4', 'Iowan Old Style', Palatino,
+             Georgia, 'DejaVu Serif', serif; font-weight: 500; }
+h1 { font-size: 20pt; color: #141413; margin-bottom: 2px; }
+h2 { font-size: 14pt; color: #C6613F; border-bottom: 1px solid #E3E0D5; padding-bottom: 2px;
+     margin-top: 20px; }
+h3 { font-size: 11.5pt; color: #141413; margin-top: 12px; }
 table { border-collapse: collapse; margin: 4px 0 8px 0; }
-th { background: #E8EEF6; text-align: left; padding: 3px 6px; border: 1px solid #B8C4D6; font-size: 9pt; }
-td { padding: 3px 6px; border: 1px solid #B8C4D6; font-size: 9pt; }
-.ok { color: #1E8449; font-weight: bold; } .bad { color: #C0392B; font-weight: bold; }
-.meta { color: #555; } .note { color: #555; font-size: 9pt; }
+th { background: #F0EEE6; text-align: left; padding: 3px 6px; border: 1px solid #E3E0D5;
+     font-size: 9pt; }
+td { padding: 3px 6px; border: 1px solid #E3E0D5; font-size: 9pt; }
+.ok { color: #3F7F4F; font-weight: bold; } .bad { color: #B0413E; font-weight: bold; }
+.meta { color: #73726C; } .note { color: #73726C; font-size: 9pt; }
 """
 
 
@@ -544,7 +550,16 @@ def export_docx(path: str, analysis, lang: str, study=None) -> None:
     figures = _all_figures(analysis, lang, study)
     html_text = build_html(analysis, lang, figures, img_src=lambda k: f"fig://{k}", study=study)
     d = docx.Document()
+    from docx.shared import RGBColor
     d.styles["Normal"].font.size = Pt(10)
+    d.styles["Normal"].font.color.rgb = RGBColor(0x14, 0x14, 0x13)
+    # the interface's look: serif headings, the title in ink, sections in terracotta
+    for name, colour in (("Title", (0x14, 0x14, 0x13)), ("Heading 1", (0xC6, 0x61, 0x3F)),
+                         ("Heading 2", (0x14, 0x14, 0x13))):
+        style = d.styles[name]
+        style.font.name = "Georgia"
+        style.font.bold = False
+        style.font.color.rgb = RGBColor(*colour)
 
     # a small HTML -> docx walker (headings, paragraphs, tables, lists, images)
     tokens = re.split(r"(<h1>.*?</h1>|<h2[^>]*>.*?</h2>|<h3>.*?</h3>|<table[^>]*>.*?</table>|"
