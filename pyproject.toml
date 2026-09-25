@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Settlement analysis of shallow foundations and embankments: Boussinesq / 2:1 stress distribution, immediate settlement (Steinbrenner, Schmertmann), primary consolidation and secondary compression, Terzaghi time–settlement, and parametric / reliability studies with PDF reporting."
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = "AGPL-3.0-only"
 license-files = ["LICENSE"]
 authors = [{ name = "Hasan Deniz Altuntaş", email = "lythosfea@gmail.com" }]
 keywords = [
